@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Verificação ao Vivo{% endblock %}
+
+{% block content %}
+<h1>Verificação de Imagens ao Vivo</h1>
+{% if result %}
+    <img src="data:image/jpeg;base64,{{ result }}" alt="Imagem ao Vivo" id="live-image">
+    <!-- Botão para atualizar a imagem -->
+    <button id="refresh-button">Atualizar Imagem</button>
+{% elif error %}
+    <p class="error">{{ error }}</p>
+{% else %}
+    <p>Carregando imagem...</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Função para atualizar a imagem sem recarregar a página
+    document.getElementById('refresh-button').addEventListener('click', function() {
+        fetch('{{ url_for("get_live_image") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.result) {
+                    document.getElementById('live-image').src = 'data:image/jpeg;base64,' + data.result;
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar a imagem:', error);
+            });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking de Grupos{% endblock %}
+
+{% block content %}
+<h1>Ranking de Grupos por Acurácia</h1>
+<table>
+    <tr>
+        <th>Posição</th>
+        <th>Grupo</th>
+        <th>Acurácia (%)</th>
+    </tr>
+    {% for i, item in enumerate(ranking_data) %}
+    <tr>
+        <td>{{ i + 1 }}</td>
+        <td>{{ item.group }}</td>
+        <td>{{ item.accuracy }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<!-- Botão para atualizar o ranking -->
+<button onclick="location.reload();">Atualizar Ranking</button>
+{% endblock %}

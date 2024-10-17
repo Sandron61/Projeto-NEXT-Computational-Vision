@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Bem-vindo, {{ session['username'] }}!</h1>
+<p>Este é o seu dashboard. Aqui você pode acessar todas as funcionalidades do sistema.</p>
+
+<!-- Exemplo de cartões para acesso rápido -->
+<div class="cards-container">
+    <div class="card">
+        <h3>Cadastro de Grupos</h3>
+        <p>Cadastre novos grupos para organização.</p>
+        <a href="{{ url_for('register_group') }}">Acessar</a>
+    </div>
+    <div class="card">
+        <h3>Ranking de Grupos</h3>
+        <p>Veja o ranking de grupos por acurácia.</p>
+        <a href="{{ url_for('group_ranking') }}">Acessar</a>
+    </div>
+    <div class="card">
+        <h3>Verificação ao Vivo</h3>
+        <p>Visualize a verificação de imagens em tempo real.</p>
+        <a href="{{ url_for('live_verification') }}">Acessar</a>
+    </div>
+</div>
+{% endblock %}

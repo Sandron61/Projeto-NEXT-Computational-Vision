@@ -1,36 +1,67 @@
+<!-- templates/live_verification.html -->
 {% extends "base.html" %}
 
 {% block title %}Verificação ao Vivo{% endblock %}
 
 {% block content %}
 <h1>Verificação de Imagens ao Vivo</h1>
-{% if result %}
-    <img src="data:image/jpeg;base64,{{ result }}" alt="Imagem ao Vivo" id="live-image">
-    <!-- Botão para atualizar a imagem -->
-    <button id="refresh-button">Atualizar Imagem</button>
-{% elif error %}
+
+<!-- Exibir mensagens flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+{% if error %}
     <p class="error">{{ error }}</p>
 {% else %}
-    <p>Carregando imagem...</p>
+    <div id="image-container">
+        <!-- Indicador de carregamento -->
+        <div id="loader" class="loader"></div>
+        <!-- Imagem ao Vivo -->
+        <img src="" alt="Imagem ao Vivo" id="live-image" style="display: none;">
+    </div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Função para atualizar a imagem sem recarregar a página
-    document.getElementById('refresh-button').addEventListener('click', function() {
+    // Função para atualizar a imagem automaticamente
+    function updateLiveImage() {
+        const imageContainer = document.getElementById('image-container');
+        const loader = document.getElementById('loader');
+        const liveImage = document.getElementById('live-image');
+
+        // Exibir o loader enquanto a imagem está sendo carregada
+        loader.style.display = 'block';
+        liveImage.style.display = 'none';
+
         fetch('{{ url_for("get_live_image") }}')
             .then(response => response.json())
             .then(data => {
                 if (data.result) {
-                    document.getElementById('live-image').src = 'data:image/jpeg;base64,' + data.result;
+                    // Remova o '?t=' para evitar problemas com Data URI
+                    liveImage.src = 'data:image/jpeg;base64,' + data.result;
+                    liveImage.style.display = 'block';
                 } else if (data.error) {
-                    alert(data.error);
+                    console.error(data.error);
                 }
             })
             .catch(error => {
                 console.error('Erro ao atualizar a imagem:', error);
+            })
+            .finally(() => {
+                loader.style.display = 'none';
             });
-    });
+    }
+
+    // Atualiza a imagem a cada 2 segundos
+    setInterval(updateLiveImage, 2000);
+
+    // Atualiza a imagem imediatamente ao carregar a página
+    document.addEventListener('DOMContentLoaded', updateLiveImage);
 </script>
 {% endblock %}

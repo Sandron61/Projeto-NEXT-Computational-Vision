@@ -10,14 +10,12 @@
         <th>Grupo</th>
         <th>Acurácia (%)</th>
     </tr>
-    {% for i, item in enumerate(ranking_data) %}
+    {% for item in ranking_data %}
     <tr>
-        <td>{{ i + 1 }}</td>
+        <td>{{ loop.index }}</td>
         <td>{{ item.group }}</td>
         <td>{{ item.accuracy }}</td>
     </tr>
     {% endfor %}
 </table>
-<!-- Botão para atualizar o ranking -->
-<button onclick="location.reload();">Atualizar Ranking</button>
 {% endblock %}

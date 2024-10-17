@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(#272b2e, #616d72);
+    background: linear-gradient(#272b2e, #616d72) no-repeat center center fixed;
     color: #fff;
 }
 
@@ -153,4 +153,44 @@ button:hover {
 
 .card a:hover {
     background-color: #616d72;
+}
+
+/* static/css/style.css */
+
+/* Estilização para mensagens flash */
+.success {
+    color: green;
+    background-color: #ccffcc;
+    padding: 10px;
+    border: 1px solid green;
+    margin-bottom: 10px;
+}
+
+.error {
+    color: red;
+    background-color: #ffcccc;
+    padding: 10px;
+    border: 1px solid red;
+    margin-bottom: 10px;
+}
+
+/* Estilização para o loader */
+.loader {
+    border: 8px solid #f3f3f3; /* Cinza claro */
+    border-top: 8px solid #ed145b; /* Rosa */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Esconder o loader quando não está carregando */
+#loader {
+    display: none;
 }

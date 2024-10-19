@@ -1,42 +1,62 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Título da Página{% endblock %}</title>
+    <title>{% block title %}Reconhecedor de Imagens{% endblock %}</title>
     <!-- Link para o arquivo CSS principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Links para bibliotecas CSS adicionais -->
-    <!-- Exemplo: Fonte do Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Fonte do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Ícone da página -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <!-- Meta viewport para responsividade -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <!-- Menu Lateral -->
-    <div class="sidebar">
-        <ul>
-            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('register_group') }}">Cadastro de Grupos</a></li>
-            <li><a href="{{ url_for('group_ranking') }}">Ranking de Grupos</a></li>
-            <li><a href="{{ url_for('live_verification') }}">Verificação ao Vivo</a></li>
-            <li><a href="{{ url_for('upload_model') }}">Upload do Modelo</a></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
-        </ul>
-    </div>
-    <!-- Conteúdo Principal -->
-    <div class="content">
-        {% block content %}
-        <!-- Conteúdo padrão caso nenhum conteúdo específico seja fornecido -->
-        <h1>Bem-vindo à Aplicação de Reconhecimento de Imagens</h1>
-        <p>Utilize o menu lateral para navegar pelas funcionalidades.</p>
-        {% endblock %}
+    <!-- Container principal -->
+    <div class="main-container">
+        <!-- Menu Lateral -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+                <h2>Reconhecedor</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+                <li><a href="{{ url_for('register_group') }}" class="{% if request.endpoint == 'register_group' %}active{% endif %}">Cadastro de Grupos</a></li>
+                <li><a href="{{ url_for('group_ranking') }}" class="{% if request.endpoint == 'group_ranking' %}active{% endif %}">Ranking de Grupos</a></li>
+                <li><a href="{{ url_for('live_verification') }}" class="{% if request.endpoint == 'live_verification' %}active{% endif %}">Verificação ao Vivo</a></li>
+                <li><a href="{{ url_for('upload_model') }}" class="{% if request.endpoint == 'upload_model' %}active{% endif %}">Upload do Modelo</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+        <!-- Conteúdo Principal -->
+        <div class="content">
+            <!-- Cabeçalho -->
+            <header>
+                <h1>{% block page_title %}{% endblock %}</h1>
+            </header>
+            <!-- Mensagens Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <!-- Conteúdo -->
+            <div class="page-content">
+                {% block content %}
+                <!-- Conteúdo padrão caso nenhum conteúdo específico seja fornecido -->
+                <p>Conteúdo da página.</p>
+                {% endblock %}
+            </div>
+        </div>
     </div>
     <!-- Scripts JavaScript -->
-    <!-- Link para bibliotecas JS adicionais -->
-    <!-- Exemplo: jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Script personalizado -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

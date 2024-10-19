@@ -1,67 +1,34 @@
 <!-- templates/live_verification.html -->
 {% extends "base.html" %}
 
-{% block title %}Verificação ao Vivo{% endblock %}
+{% block title %}Verificação ao Vivo - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Verificação ao Vivo{% endblock %}
 
 {% block content %}
-<h1>Verificação de Imagens ao Vivo</h1>
-
-<!-- Exibir mensagens flash -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <p class="{{ category }}">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-{% if error %}
-    <p class="error">{{ error }}</p>
-{% else %}
-    <div id="image-container">
-        <!-- Indicador de carregamento -->
-        <div id="loader" class="loader"></div>
-        <!-- Imagem ao Vivo -->
-        <img src="" alt="Imagem ao Vivo" id="live-image" style="display: none;">
+<div class="live-verification-container">
+    <div class="controls">
+        {% if processing_active %}
+            <a href="{{ url_for('stop_live_processing') }}" class="btn btn-danger">Parar Processamento</a>
+        {% else %}
+            <a href="{{ url_for('start_live_processing') }}" class="btn btn-success">Iniciar Processamento ao vivo</a>
+        {% endif %}
     </div>
-{% endif %}
+    <div class="video-container">
+        <!-- Display the live video stream -->
+        <img src="{{ url_for('live_feed') }}" alt="Imagem ao Vivo" id="live-image">
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Função para atualizar a imagem automaticamente
-    function updateLiveImage() {
-        const imageContainer = document.getElementById('image-container');
-        const loader = document.getElementById('loader');
-        const liveImage = document.getElementById('live-image');
-
-        // Exibir o loader enquanto a imagem está sendo carregada
-        loader.style.display = 'block';
-        liveImage.style.display = 'none';
-
-        fetch('{{ url_for("get_live_image") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.result) {
-                    // Remova o '?t=' para evitar problemas com Data URI
-                    liveImage.src = 'data:image/jpeg;base64,' + data.result;
-                    liveImage.style.display = 'block';
-                } else if (data.error) {
-                    console.error(data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao atualizar a imagem:', error);
-            })
-            .finally(() => {
-                loader.style.display = 'none';
-            });
+    function updateImage() {
+        console.log("Updating image...");
+        var image = document.getElementById('live-image');
+        var timestamp = new Date().getTime();
+        image.src = "{{ url_for('live_feed') }}?t=" + timestamp;
     }
 
-    // Atualiza a imagem a cada 2 segundos
-    setInterval(updateLiveImage, 2000);
-
-    // Atualiza a imagem imediatamente ao carregar a página
-    document.addEventListener('DOMContentLoaded', updateLiveImage);
+    setInterval(updateImage, 500); // Update every 500 milliseconds
 </script>
 {% endblock %}

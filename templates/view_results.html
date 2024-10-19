@@ -1,23 +1,26 @@
 <!-- templates/view_results.html -->
 {% extends "base.html" %}
 
-{% block title %}Resultados de Reconhecimento{% endblock %}
+{% block title %}Resultados de Reconhecimento - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Resultados de Reconhecimento{% endblock %}
 
 {% block content %}
-<h1>Resultados de Reconhecimento</h1>
-
-<table>
-    <tr>
-        <th>Posição</th>
-        <th>Grupo</th>
-        <th>Pontos</th>
-    </tr>
-    {% for item in ranking_data %}
-    <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ item.group }}</td>
-        <td>{{ item.points }}</td>
-    </tr>
-    {% endfor %}
+<table class="results-table">
+    <thead>
+        <tr>
+            <th>Posição</th>
+            <th>Grupo</th>
+            <th>Acurácia (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in ranking_data %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.group }}</td>
+            <td>{{ '%.2f'|format(item.accuracy * 100) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

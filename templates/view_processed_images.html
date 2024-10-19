@@ -1,0 +1,23 @@
+<!-- templates/view_processed_images.html -->
+
+{% extends "base.html" %}
+
+{% block title %}Imagens Processadas - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Imagens Processadas{% endblock %}
+
+{% block content %}
+<div class="processed-images-container">
+    {% if images %}
+        <div class="images-grid">
+            {% for image_path in images %}
+                <div class="image-item">
+                    <img src="{{ url_for('static', filename='captures/' ~ img_path.split('/')[-1]) }}" alt="Imagem" width="100">
+
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Nenhuma imagem processada disponível.</p>
+    {% endif %}
+</div>
+{% endblock %}

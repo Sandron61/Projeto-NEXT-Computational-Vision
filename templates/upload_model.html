@@ -1,22 +1,21 @@
+<!-- templates/upload_model.html -->
 {% extends "base.html" %}
 
-{% block title %}Upload do Modelo{% endblock %}
+{% block title %}Upload do Modelo - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Upload do Modelo{% endblock %}
 
 {% block content %}
-<h1>Upload do Modelo de Visão Computacional</h1>
-<form method="post" enctype="multipart/form-data">
-    <input type="file" name="model_file" accept=".pt" required>
-    <button type="submit">Enviar</button>
-</form>
-{% if current_model %}
-    <p>Modelo atual: {{ current_model }}</p>
-{% endif %}
-<!-- Mostrar mensagens de sucesso ou erro -->
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            <p class="success">{{ message }}</p>
-        {% endfor %}
+<div class="form-container">
+    <form method="post" enctype="multipart/form-data" class="standard-form">
+        <h2>Enviar Modelo de Visão Computacional</h2>
+        <div class="form-group">
+            <label for="model_file">Selecionar arquivo (.pt)</label>
+            <input type="file" name="model_file" id="model_file" accept=".pt" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+    {% if current_model %}
+        <p>Modelo atual: {{ current_model }}</p>
     {% endif %}
-{% endwith %}
+</div>
 {% endblock %}

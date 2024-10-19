@@ -1,19 +1,18 @@
+<!-- templates/register_group.html -->
 {% extends "base.html" %}
 
-{% block title %}Cadastro de Grupos{% endblock %}
+{% block title %}Cadastro de Grupos - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Cadastro de Grupos{% endblock %}
 
 {% block content %}
-<h1>Cadastro de Grupos</h1>
-<form method="post">
-    <input type="text" name="group_name" placeholder="Nome do Grupo" required>
-    <button type="submit">Cadastrar</button>
-</form>
-<!-- Mostrar mensagens de sucesso ou erro -->
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            <p class="success">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<div class="form-container">
+    <form method="post" class="standard-form">
+        <h2>Cadastrar Novo Grupo</h2>
+        <div class="form-group">
+            <label for="group_name">Nome do Grupo</label>
+            <input type="text" name="group_name" id="group_name" placeholder="Digite o nome do grupo" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+</div>
 {% endblock %}

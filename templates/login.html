@@ -1,17 +1,24 @@
+<!-- templates/login.html -->
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Login - Reconhecedor de Imagens{% endblock %}
 
 {% block content %}
 <div class="login-container">
-    <form method="post">
+    <form method="post" class="login-form">
         <h2>Login</h2>
         {% if error %}
-            <p class="error">{{ error }}</p>
+            <div class="error-message">{{ error }}</div>
         {% endif %}
-        <input type="text" name="username" placeholder="Usuário" required>
-        <input type="password" name="password" placeholder="Senha" required>
-        <button type="submit">Entrar</button>
+        <div class="form-group">
+            <label for="username">Usuário</label>
+            <input type="text" name="username" id="username" placeholder="Digite seu usuário" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
+        </div>
+        <button type="submit" class="btn">Entrar</button>
     </form>
 </div>
 {% endblock %}

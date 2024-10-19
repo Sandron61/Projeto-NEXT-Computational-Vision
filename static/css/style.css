@@ -1,196 +1,385 @@
-body {
+/* static/css/style.css */
+
+/* Reset CSS */
+* {
     margin: 0;
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(#272b2e, #616d72) no-repeat center center fixed;
-    color: #fff;
-}
-
-.sidebar {
-    position: fixed;
-    width: 200px;
-    height: 100%;
-    background-color: #272b2e;
-    overflow: auto;
-}
-
-.sidebar ul {
-    list-style-type: none;
     padding: 0;
+    box-sizing: border-box;
 }
 
-.sidebar ul li a {
-    display: block;
-    color: #616d72;
-    padding: 15px;
+/* Fonte padrão */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to bottom, #272b2e, #616d72);
+    color: #fff;
+}
+
+/* Link padrão */
+a {
     text-decoration: none;
-    transition: color 0.3s;
+    color: inherit;
 }
 
-.sidebar ul li a:hover {
-    color: #ed145b;
-}
-
-.content {
-    margin-left: 200px;
-    padding: 20px;
-}
-
-.login-container {
-    width: 300px;
-    margin: 100px auto;
-    background-color: #272b2e;
-    padding: 20px;
-    border: 1px solid #ed145b;
-}
-
-.login-container h2 {
+/* Botões */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 5px;
     text-align: center;
-    color: #ed145b;
-}
-
-.login-container input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #616d72;
-    border: none;
-    color: #fff;
-}
-
-.login-container button {
-    width: 100%;
-    padding: 10px;
-    background-color: #ed145b;
-    border: none;
-    color: #fff;
     cursor: pointer;
+    background-color: #ed145b;
+    color: #fff;
+    border: none;
     transition: background-color 0.3s;
 }
 
-.login-container button:hover {
+.btn:hover {
+    background-color: #ff2e72;
+}
+
+.btn-primary {
+    background-color: #ed145b;
+}
+
+.btn-secondary {
     background-color: #616d72;
 }
 
-h1 {
+.btn-success {
+    background-color: #28a745;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+}
+
+/* Layout principal */
+.main-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #272b2e;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    text-align: center;
+    padding: 20px;
+}
+
+.sidebar-header img {
+    width: 80px;
+    margin-bottom: 10px;
+}
+
+.sidebar-header h2 {
+    font-size: 24px;
+}
+
+.nav-links {
+    list-style: none;
+}
+
+.nav-links li {
+    border-bottom: 1px solid #616d72;
+}
+
+.nav-links li a {
+    display: block;
+    padding: 15px 20px;
+    color: #616d72;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-links li a:hover {
+    background-color: #ed145b;
+    color: #fff;
+}
+
+/* Conteúdo */
+.content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+header h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
     color: #ed145b;
 }
 
-.error {
-    color: red;
+/* Mensagens Flash */
+.flash-messages {
+    margin-bottom: 20px;
 }
 
-.success {
-    color: green;
+.flash-message {
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    color: #fff;
 }
 
-table {
+.flash-message.success {
+    background-color: #28a745;
+}
+
+.flash-message.error {
+    background-color: #dc3545;
+}
+
+/* Formulários */
+.form-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.standard-form {
+    background-color: #272b2e;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.standard-form h2 {
+    margin-bottom: 20px;
+    color: #ed145b;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="file"] {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-table, th, td {
-    border: 1px solid #616d72;
-}
-
-th, td {
     padding: 10px;
+    border: 1px solid #616d72;
+    border-radius: 5px;
+    background-color: #3a3f42;
+    color: #fff;
+}
+
+.form-group input::placeholder {
+    color: #ccc;
+}
+
+/* Login */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 40px);
+}
+
+.login-form {
+    width: 100%;
+    max-width: 400px;
+    background-color: #272b2e;
+    padding: 30px;
+    border-radius: 5px;
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ed145b;
+}
+
+.error-message {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
     text-align: center;
 }
 
-th {
-    background-color: #272b2e;
-}
-
-tr:nth-child(even) {
-    background-color: #616d72;
-}
-
-button {
-    background-color: #ed145b;
-    color: #fff;
-    padding: 10px;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #616d72;
-}
-
+/* Cartões */
 .cards-container {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
-    margin-top: 20px;
 }
 
 .card {
+    flex: 1 1 calc(25% - 20px);
     background-color: #272b2e;
-    border: 1px solid #ed145b;
     padding: 20px;
-    width: calc(33% - 40px);
-    box-sizing: border-box;
-    text-align: center;
+    border-radius: 5px;
+    min-width: 200px;
+    color: #fff;
+    border: 1px solid #616d72;
 }
 
 .card h3 {
+    margin-bottom: 10px;
     color: #ed145b;
 }
 
 .card p {
-    color: #fff;
+    margin-bottom: 15px;
 }
 
-.card a {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #ed145b;
-    color: #fff;
-    text-decoration: none;
-}
-
-.card a:hover {
+.card .btn {
     background-color: #616d72;
 }
 
-/* static/css/style.css */
-
-/* Estilização para mensagens flash */
-.success {
-    color: green;
-    background-color: #ccffcc;
-    padding: 10px;
-    border: 1px solid green;
-    margin-bottom: 10px;
+.card .btn:hover {
+    background-color: #ed145b;
+    color: #fff;
 }
 
-.error {
-    color: red;
-    background-color: #ffcccc;
-    padding: 10px;
-    border: 1px solid red;
-    margin-bottom: 10px;
+/* Tabelas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #272b2e;
+    color: #fff;
+    border: 1px solid #616d72;
 }
 
-/* Estilização para o loader */
-.loader {
-    border: 8px solid #f3f3f3; /* Cinza claro */
-    border-top: 8px solid #ed145b; /* Rosa */
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 2s linear infinite;
-    margin: 20px auto;
+table thead tr {
+    background-color: #616d72;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+table th,
+table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #3a3f42;
 }
 
-/* Esconder o loader quando não está carregando */
-#loader {
-    display: none;
+table tbody tr:hover {
+    background-color: #3a3f42;
+}
+
+table th {
+    color: #fff;
+}
+
+/* Verificação ao Vivo */
+.live-verification-container {
+    text-align: center;
+    width: 100%;
+}
+
+.video-container {
+    margin-top: 20px;
+    width: 100%;
+}
+
+
+#live-image {
+    width: 100%;
+    max-width: 640px; /* Maximum width to prevent stretching */
+    height: auto;
+    border: 1px solid #616d72;
+}
+
+
+
+/* Botões de Ação */
+.action-buttons {
+    margin-bottom: 20px;
+}
+
+.action-buttons form,
+.action-buttons a {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.action-buttons .btn {
+    background-color: #616d72;
+}
+
+.action-buttons .btn:hover {
+    background-color: #ed145b;
+}
+
+/* Sidebar Hover Effects */
+.nav-links li a:hover {
+    background-color: #ed145b;
+    color: #fff;
+}
+
+/* Sidebar Active Link */
+.nav-links li a.active {
+    background-color: #ed145b;
+    color: #fff;
+}
+
+/* Hover Effects for Links */
+.nav-links li a {
+    color: #616d72;
+}
+
+.nav-links li a:hover {
+    color: #fff;
+}
+
+/* Table Hover Effects */
+table tbody tr:hover {
+    background-color: #3a3f42;
+    cursor: pointer;
+}
+
+/* Flash Message Close Button */
+.flash-message .close-btn {
+    float: right;
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .cards-container {
+        flex-direction: column;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+
+    .sidebar {
+        width: 100%;
+        position: fixed;
+        height: auto;
+        z-index: 1000;
+    }
+
+    .content {
+        margin-top: 250px;
+    }
+}
+/* Add to static/css/style.css */
+
+/* Images in Ranking Table */
+.ranking-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.ranking-images img {
+    border: 1px solid #616d72;
+    border-radius: 3px;
 }

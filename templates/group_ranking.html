@@ -1,21 +1,40 @@
+<!-- templates/group_ranking.html -->
+
 {% extends "base.html" %}
 
-{% block title %}Ranking de Grupos{% endblock %}
+{% block title %}Ranking de Grupos - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Ranking de Grupos{% endblock %}
 
 {% block content %}
-<h1>Ranking de Grupos por Acurácia</h1>
-<table>
-    <tr>
-        <th>Posição</th>
-        <th>Grupo</th>
-        <th>Acurácia (%)</th>
-    </tr>
-    {% for item in ranking_data %}
-    <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ item.group }}</td>
-        <td>{{ item.accuracy }}</td>
-    </tr>
-    {% endfor %}
+<table class="ranking-table">
+    <thead>
+        <tr>
+            <th>Posição</th>
+            <th>Grupo</th>
+            <th>Acurácia (%)</th>
+            <th>Imagens</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in ranking_data %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.group }}</td>
+            <td>{{ '%.2f'|format(item.accuracy * 100) }}</td>
+            <td>
+                {% if item.images %}
+                <div class="ranking-images">
+                    {% for img_path in item.images %}
+                    <img src="{{ url_for('static', filename='captures/' ~ img_path.split('/')[-1]) }}" alt="Imagem" width="100">
+
+                    {% endfor %}
+                </div>
+                {% else %}
+                Nenhuma imagem disponível
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

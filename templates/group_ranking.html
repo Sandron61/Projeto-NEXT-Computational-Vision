@@ -26,7 +26,6 @@
                 <div class="ranking-images">
                     {% for img_path in item.images %}
                     <img src="{{ url_for('static', filename='captures/' ~ img_path.split('/')[-1]) }}" alt="Imagem" width="100">
-
                     {% endfor %}
                 </div>
                 {% else %}

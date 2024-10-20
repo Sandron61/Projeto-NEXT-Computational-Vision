@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %} 
 
 {% block title %}Verificação ao Vivo - Reconhecedor de Imagens{% endblock %}
 {% block page_title %}Verificação ao Vivo{% endblock %}
@@ -11,6 +11,10 @@
         {% else %}
             <a href="{{ url_for('start_live_processing') }}" class="btn btn-success" id="start-button">Iniciar Processamento ao vivo</a>
         {% endif %}
+        
+        <!-- Botões de Captura Contínua -->
+        <button class="btn btn-primary" id="start-capture-button" style="margin-left: 10px;">Iniciar Captura Contínua</button>
+        <button class="btn btn-danger" id="stop-capture-button" style="margin-left: 10px; display: none;">Parar Captura Contínua</button>
     </div>
     
     <!-- Adicionando margem para manter o layout consistente -->
@@ -27,6 +31,7 @@
 <script>
     let processingActive = {{ processing_active | tojson }};
     let updateInterval;
+    let captureIntervalId;
 
     function updateFeed() {
         if (processingActive) {
@@ -98,5 +103,41 @@
     if (processingActive) {
         startUpdatingFeed();
     }
+
+    // Função para iniciar captura contínua
+    document.getElementById('start-capture-button').addEventListener('click', function() {
+        fetch('{{ url_for("start_continuous_capture") }}', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    // Alterar os botões após iniciar a captura
+                    document.getElementById('start-capture-button').style.display = 'none';
+                    document.getElementById('stop-capture-button').style.display = 'inline-block';
+                    alert("Captura contínua iniciada.");
+                } else {
+                    alert("Falha ao iniciar a captura contínua.");
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao iniciar captura contínua:", error);
+            });
+    });
+
+    // Função para parar captura contínua
+    document.getElementById('stop-capture-button').addEventListener('click', function() {
+        fetch('{{ url_for("stop_continuous_capture") }}', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    // Alterar os botões após parar a captura
+                    document.getElementById('start-capture-button').style.display = 'inline-block';
+                    document.getElementById('stop-capture-button').style.display = 'none';
+                    alert("Captura contínua parada.");
+                } else {
+                    alert("Falha ao parar a captura contínua.");
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao parar captura contínua:", error);
+            });
+    });
 </script>
 {% endblock %}

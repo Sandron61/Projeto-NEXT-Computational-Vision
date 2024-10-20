@@ -12,11 +12,17 @@
 
 <!-- Botões de Ação -->
 <div class="action-buttons">
-    <form method="post" action="{{ url_for('start_capture') }}">
+    <form method="post" action="{{ url_for('start_camera_capture') }}">
+        <label for="camera_url">URL da Câmera:</label>
+        <input type="text" name="camera_url" id="camera_url" value="http://192.168.1.7/cam-hi.jpg" placeholder="Insira a URL da câmera">
         <button type="submit" class="btn btn-primary">Iniciar Captura</button>
     </form>
+    
     <a href="{{ url_for('stop_capture') }}" class="btn btn-warning">Parar Captura</a>
-    <a href="{{ url_for('process_results') }}" class="btn btn-success">Processar Resultados</a>
+    
+    <!-- Botão para processar imagens usando formulário POST -->
+    <a href="#" onclick="document.getElementById('processImagesForm').submit();" class="btn btn-success">Processar Imagens</a>
+    <form id="processImagesForm" action="{{ url_for('process_and_rank_images') }}" method="POST" style="display:none;"></form>
 </div>
 
 <!-- Cartões de Funcionalidades -->

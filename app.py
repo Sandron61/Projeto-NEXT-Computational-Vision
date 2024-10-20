@@ -19,12 +19,34 @@ app.secret_key = 'your_secret_key'  # Replace with your own secret key
 
 # Global variables
 model = None
+model_loaded = False
+camera = None
+frame = None
 capturing = False  # Renamed from capture_active
 processing_active = False
 frame = None
 capture_images = []
 groups = {}
 ranking_data = []
+camera_url = 'http://192.168.1.7/cam-hi.jpg'
+
+def capture_frame():
+    global camera, frame
+    if camera is not None and camera.isOpened():
+        ret, new_frame = camera.read()
+        if ret:
+            print("Frame captured successfully.")
+            frame = new_frame
+        else:
+            print("Error: Could not read frame from camera.")
+            frame = None
+    else:
+        # Se a câmera não está inicializada, não tente capturar o frame
+        print("Error: Camera is not initialized or cannot be accessed.")
+        frame = None
+
+
+
 
 
 # Load ranking data from file
@@ -83,26 +105,65 @@ def logout():
 def dashboard():
     return render_template('dashboard.html')
 
+# Função contínua de captura de frames do feed de rede
+def continuous_capture():
+    global frame
+    while True:
+        capture_frame()
+        time.sleep(0.1)  # Pequeno atraso para evitar sobrecarga
+
 
 
 # Live verification
 @app.route('/live_verification')
 def live_verification():
-    global processing_active
     return render_template('live_verification.html', processing_active=processing_active)
 
 
+
+def initialize_camera():
+    global camera
+    try:
+        # Tentando inicializar a câmera via URL
+        image_url = 'http://192.168.1.7/cam-hi.jpg'
+        img_resp = urllib.request.urlopen(image_url)
+        if img_resp.getcode() == 200:
+            print("Camera URL accessed successfully.")
+            return True
+        else:
+            print("Error: Could not access camera URL.")
+            return False
+    except Exception as e:
+        print(f"Error accessing camera URL: {e}")
+        return False
+
+
+
+
+# Start live processing
 # Start live processing
 @app.route('/start_live_processing')
 def start_live_processing():
     global processing_active
-    print("start_live_processing route called.")
-    if not processing_active:
-        processing_active = True
-        print("Starting live processing...")
-        threading.Thread(target=process_live_video).start()
-        flash('Processamento ao vivo iniciado', 'success')
+
+    # Iniciar a verificação da câmera
+    if not initialize_camera():
+        return "Error initializing camera", 500
+
+    processing_active = True
+    threading.Thread(target=process_live_video, daemon=True).start()  # Inicia a thread para o processamento de vídeo
     return redirect(url_for('live_verification'))
+
+
+
+
+def close_camera():
+    global camera
+    if camera is not None:
+        camera.release()
+        camera = None
+        print("Camera released successfully.")
+
 
 
 
@@ -110,20 +171,30 @@ def start_live_processing():
 # Stop live processing
 @app.route('/stop_live_processing')
 def stop_live_processing():
-    global processing_active
-    if processing_active:
-        processing_active = False
-        print("Stopping live processing...")
-        flash('Processamento ao vivo parado', 'info')
+    global camera, processing_active
+    if camera is not None:
+        camera.release()
+        camera = None
+    processing_active = False
     return redirect(url_for('live_verification'))
 
 # Video feed
 @app.route('/live_feed')
 def live_feed():
-    global frame
+    global frame, processing_active, model_loaded
+
     print("live_feed route called.")
-    if frame is not None:
-        ret, buffer = cv2.imencode('.jpg', frame)
+
+    # Esperar até que o modelo esteja carregado
+    if not model_loaded:
+        return 'Model not loaded', 503
+
+    if not processing_active or frame is None:
+        # Retorna status 204 se o processamento não está ativo ou não há frame disponível
+        return '', 204
+
+    ret, buffer = cv2.imencode('.jpg', frame)
+    if ret:
         response = make_response(buffer.tobytes())
         response.headers['Content-Type'] = 'image/jpeg'
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -131,8 +202,25 @@ def live_feed():
         response.headers['Expires'] = '0'
         return response
     else:
-        print("Frame is None in live_feed.")
+        print("Error encoding frame.")
         return '', 204
+
+
+
+
+
+@app.route('/check_model_status')
+def check_model_status():
+    global model_loaded, processing_active
+    if model_loaded and processing_active:
+        return '', 200
+    else:
+        return '', 503
+
+
+
+
+
 
 
 
@@ -148,24 +236,30 @@ def gen_frames():
             time.sleep(0.1)
 
 def process_live_video():
-    global frame
-    global processing_active
-    global model
+    global processing_active, frame, model
 
-    # Load model if not loaded
+    # Garantir que o modelo seja carregado antes de iniciar o processamento de vídeo
     if model is None:
         load_model()
 
-    # Replace with your image URL
-    image_url = 'http://192.168.1.7/cam-hi.jpg'  # Update this URL
+    if model is None:
+        print("Model loading failed. Stopping live processing.")
+        processing_active = False
+        return
+
+    # URL da câmera
+    image_url = 'http://192.168.1.7/cam-hi.jpg'
 
     while processing_active:
         try:
             img_resp = urllib.request.urlopen(image_url)
             imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
             img = cv2.imdecode(imgnp, -1)
-            results = model(img)
-            frame = np.squeeze(results.render())
+            if model is not None:
+                results = model(img)
+                frame = np.squeeze(results.render())
+            else:
+                frame = img
         except Exception as e:
             print(f"Error processing live video: {e}")
             frame = None
@@ -174,27 +268,107 @@ def process_live_video():
 
 
 
-# Start capture
-@app.route('/start_capture', methods=['POST'])
-def start_capture():
+
+
+import threading
+
+camera_lock = threading.Lock()  # Lock global para gerenciar o acesso à câmera
+
+def start_capture(camera_url, reset_delay=5):
     global capturing
     capturing = True
-    print("Capture started.")
-    flash('Captura iniciada', 'success')
-    # Start the capture_images_func in a new thread
-    threading.Thread(target=capture_images_func).start()
-    return redirect(url_for('live_verification'))
+
+    def reconnect_camera():
+        """Função para reinicializar a câmera após falhas."""
+        nonlocal cap
+        with camera_lock:  # Bloqueia o acesso à câmera
+            print("Liberando a câmera...")
+            cap.release()  # Libera a câmera
+            time.sleep(reset_delay)  # Aguarda antes de reconectar
+            print(f"Tentando reconectar a câmera após {reset_delay} segundos de espera...")
+            cap = cv2.VideoCapture(camera_url)  # Tenta reconectar a câmera
+            if cap.isOpened():
+                print("Câmera reconectada com sucesso.")
+            else:
+                print(f"Erro: Não foi possível reconectar à câmera com URL: {camera_url}")
+
+    # Inicializa a câmera pela primeira vez
+    with camera_lock:  # Bloqueia o acesso à câmera
+        cap = cv2.VideoCapture(camera_url)
+        if not cap.isOpened():
+            print(f"Erro: Não foi possível abrir a câmera com a URL fornecida: {camera_url}")
+            capturing = False
+            return
+
+    while capturing:
+        with camera_lock:  # Bloqueia o acesso à câmera durante a captura
+            ret, frame = cap.read()
+
+        if ret:
+            try:
+                # Gera o nome do arquivo e salva a imagem capturada
+                filename = f"capture_{int(time.time() * 1000)}.jpg"
+                filepath = os.path.join('static/captures', filename)
+                cv2.imwrite(filepath, frame)
+                print(f"Imagem capturada e salva: {filename}")
+            except Exception as e:
+                print(f"Erro ao salvar a imagem capturada: {str(e)}")
+                capturing = False
+                break
+        else:
+            # Se não for possível capturar a imagem, reinicia a câmera
+            print("Falha ao capturar o frame. Reinicializando a câmera...")
+            reconnect_camera()
+
+    with camera_lock:  # Bloqueia o acesso à câmera durante a liberação
+        cap.release()
+    print("Captura encerrada.")
 
 
+
+
+
+
+
+
+
+
+
+
+
+# Stop capture
 # Stop capture
 @app.route('/stop_capture')
 def stop_capture():
     global capturing
     capturing = False
-    print("Capture stopped.")
-    flash('Captura parada', 'info')
-    # Add any additional logic for stopping capture
-    return redirect(url_for('live_verification'))
+    print("Interrompendo captura...")
+    # Retornando redirecionamento para o dashboard ou uma página apropriada
+    flash('Captura de imagens interrompida.', 'success')
+    return redirect(url_for('dashboard'))  # Corrigido
+
+
+@app.route('/start_capture', methods=['POST'])
+def start_camera_capture():
+    # Use um URL de câmera padrão se o URL não for fornecido via formulário
+    camera_url = request.form.get('camera_url', 'http://192.168.1.7/cam-hi.jpg')  # URL da câmera enviada via formulário ou padrão
+    interval = int(request.form.get('interval', 2))  # Intervalo entre capturas, se fornecido
+    capture_thread = threading.Thread(target=start_capture, args=(camera_url, interval))
+    capture_thread.start()
+    flash('Captura de imagens iniciada.', 'success')
+    return redirect(url_for('dashboard'))
+
+
+
+@app.route('/stop_capture', methods=['POST'])
+def stop_camera_capture():
+    stop_capture()
+    flash('Captura de imagens interrompida.', 'success')
+    return redirect(url_for('dashboard'))
+
+
+
+
 
 # Capture images function
 def capture_images_func():
@@ -228,55 +402,68 @@ def capture_images_func():
 
 
 # Process results
-@app.route('/process_results')
-def process_results():
+@app.route('/process_images', methods=['POST'])
+def process_and_rank_images():
     global capture_images
-    global ranking_data  # Declare ranking_data as global
-    if capture_images:
-        # Ensure directory exists
-        if not os.path.exists('static/captures'):
-            os.makedirs('static/captures')
+    global ranking_data  # Ranking global
 
-        # Process captured images, select top 5 based on accuracy
+    if capture_images:
         accuracies = []
         for item in capture_images:
-            # Assuming results.xyxy[0] contains detections
             results = item['results']
             if results is not None and len(results.xyxy[0]) > 0:
-                # Confidence scores are in results.xyxy[0][:, 4]
+                # Pega as acurácias das detecções
                 confidences = results.xyxy[0][:, 4]
                 max_confidence = float(confidences.max())
                 accuracies.append({'image': item['image'], 'accuracy': max_confidence, 'results': results})
-        # Sort by accuracy
+
+        # Ordena as imagens pela acurácia e seleciona as top 5
         top5 = sorted(accuracies, key=lambda x: x['accuracy'], reverse=True)[:5]
-        avg_accuracy = sum([x['accuracy'] for x in top5]) / 5 if top5 else 0
-        # Update ranking
+        avg_accuracy = sum([x['accuracy'] for x in top5]) / len(top5) if top5 else 0
+
+        # Adiciona as melhores imagens ao ranking
         group_name = session.get('group_name', 'Anônimo')
         ranking_entry = {'group': group_name, 'accuracy': avg_accuracy, 'images': []}
 
-        # Save the top images with rendered results
+        # Salva as imagens com resultados
         for idx, item in enumerate(top5):
             img_path = item['image']
             img = cv2.imread(img_path)
             results = item['results']
             img_with_results = np.squeeze(results.render())
-            # Save the image with results
             result_img_name = f'{group_name}_result_{idx}.jpg'
             result_img_path = f'static/captures/{result_img_name}'
             cv2.imwrite(result_img_path, img_with_results)
-            # Add to ranking entry
             ranking_entry['images'].append(f'captures/{result_img_name}')
 
-        # Save ranking data
+        # Atualiza o ranking
         load_ranking_data()
-        # Remove previous entry of the group if exists
-        ranking_data = [entry for entry in ranking_data if entry['group'] != group_name]
+        ranking_data = [entry for entry in ranking_data if entry['group'] != group_name]  # Remove entradas antigas do grupo
         ranking_data.append(ranking_entry)
         save_ranking_data()
+
         flash(f'Resultados processados. Média de acurácia: {avg_accuracy:.2f}', 'success')
     else:
         flash('Nenhuma imagem capturada para processar.', 'error')
-    return redirect(url_for('live_verification'))
+
+    return redirect(url_for('group_ranking'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # View processed images
 @app.route('/view_processed_images')
@@ -344,25 +531,29 @@ def view_results():
 
 # Load model
 def load_model():
-    global model
-    model_path = 'models/best.pt'  # Update this path if necessary
+    global model, model_loaded
+    model_path = 'models/best.pt'
     if os.path.exists(model_path):
         print("Loading model from", model_path)
         try:
             model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True)
             model.conf = 0.6
+            model_loaded = True  # Modelo carregado com sucesso
             print("Model loaded successfully.")
         except Exception as e:
             print(f"Error loading model: {e}")
             traceback.print_exc()
             model = None
+            model_loaded = False
     else:
         print("Model file not found at", model_path)
         model = None
+        model_loaded = False
 
 
+# Inicia a aplicação Flask
 if __name__ == '__main__':
-    # Create necessary directories if they don't exist
+    # Verificar se os diretórios necessários existem
     if not os.path.exists('models'):
         os.makedirs('models')
     if not os.path.exists('static/captures'):

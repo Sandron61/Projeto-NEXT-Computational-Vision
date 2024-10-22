@@ -11,7 +11,7 @@
         <tr>
             <th>Posição</th>
             <th>Grupo</th>
-            <th>Acurácia (%)</th>
+            <th>Acurácia Média (%)</th>
             <th>Imagens</th>
         </tr>
     </thead>
@@ -24,8 +24,15 @@
             <td>
                 {% if item.images %}
                 <div class="ranking-images">
-                    {% for img_path in item.images %}
-                    <img src="{{ url_for('static', filename='captures/' ~ img_path.split('/')[-1]) }}" alt="Imagem" width="100">
+                    {% for img_info in item.images %}
+                    <div class="ranking-image-item">
+                        <img src="{{ url_for('static', filename='captures/' ~ item.group ~ '/' ~ img_info.image_filename) }}" alt="Imagem" width="100">
+                        {% if img_info.class %}
+                            <p>{{ img_info.class }}: {{ '%.2f'|format(img_info.confidence * 100) }}%</p>
+                        {% else %}
+                            <p>Nenhuma detecção</p>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
                 {% else %}

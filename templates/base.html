@@ -19,7 +19,7 @@
         <!-- Menu Lateral -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="30" height="30">
                 <h2>Reconhecedor</h2>
             </div>
             <ul class="nav-links">
@@ -27,7 +27,6 @@
                 <li><a href="{{ url_for('register_group') }}" class="{% if request.endpoint == 'register_group' %}active{% endif %}">Cadastro de Grupos</a></li>
                 <li><a href="{{ url_for('group_ranking') }}" class="{% if request.endpoint == 'group_ranking' %}active{% endif %}">Ranking de Grupos</a></li>
                 <li><a href="{{ url_for('live_verification') }}" class="{% if request.endpoint == 'live_verification' %}active{% endif %}">Verificação ao Vivo</a></li>
-                <li><a href="{{ url_for('upload_model') }}" class="{% if request.endpoint == 'upload_model' %}active{% endif %}">Upload do Modelo</a></li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
             </ul>
         </nav>
@@ -35,7 +34,18 @@
         <div class="content">
             <!-- Cabeçalho -->
             <header>
-                <h1>{% block page_title %}{% endblock %}</h1>
+                <div class="header-left">
+                    <h1>{% block page_title %}{% endblock %}</h1>
+                </div>
+                <div class="header-right">
+                    {% if session.get('group_name') %}
+                        <p>Grupo Atual: {{ session['group_name'] }}</p>
+                        <p>Modelo Carregado: {{ session['model_name'] }}</p>
+                    {% else %}
+                        <p>Nenhum grupo selecionado.</p>
+                    {% endif %}
+                    <a href="{{ url_for('select_group') }}" class="btn btn-secondary">Selecionar Grupo</a>
+                </div>
             </header>
             <!-- Mensagens Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}

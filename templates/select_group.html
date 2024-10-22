@@ -1,0 +1,19 @@
+<!-- templates/select_group.html -->
+{% extends "base.html" %}
+
+{% block title %}Selecionar Grupo{% endblock %}
+{% block page_title %}Selecionar Grupo{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('select_group') }}" method="POST">
+    <div class="form-group">
+        <label for="group_name">Selecione um Grupo:</label>
+        <select name="group_name" id="group_name" class="form-control" required>
+            {% for group in group_names %}
+            <option value="{{ group }}">{{ group }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Selecionar Grupo</button>
+</form>
+{% endblock %}

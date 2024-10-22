@@ -9,10 +9,14 @@
 <div class="processed-images-container">
     {% if images %}
         <div class="images-grid">
-            {% for image_path in images %}
+            {% for img_info in images %}
                 <div class="image-item">
-                    <img src="{{ url_for('static', filename='captures/' ~ img_path.split('/')[-1]) }}" alt="Imagem" width="100">
-
+                    <img src="{{ url_for('static', filename='captures/' ~ group_name ~ '/' ~ img_info.image_filename) }}" alt="Imagem" width="100">
+                    {% if img_info.class %}
+                        <p>{{ img_info.class }}: {{ '%.2f'|format(img_info.confidence * 100) }}%</p>
+                    {% else %}
+                        <p>Nenhuma detecção</p>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

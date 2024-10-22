@@ -383,3 +383,55 @@ table tbody tr:hover {
     border: 1px solid #616d72;
     border-radius: 3px;
 }
+
+
+/* Estilos para o cabeçalho */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left h1 {
+    font-size: 28px;
+    margin-bottom: 0;
+    color: #ed145b;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.header-right p {
+    margin: 0;
+    color: #fff;
+}
+
+.header-right .btn {
+    margin-top: 5px;
+}
+
+
+
+
+/* Estilos para as imagens no ranking */
+.ranking-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ranking-image-item {
+    text-align: center;
+}
+
+.ranking-image-item img {
+    border: 1px solid #616d72;
+    border-radius: 3px;
+}
+
+.ranking-image-item p {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #fff;
+}

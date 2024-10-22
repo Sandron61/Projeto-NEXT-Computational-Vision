@@ -11,21 +11,6 @@
 </div>
 
 <!-- Botões de Ação -->
-<div class="action-buttons">
-    <form method="post" action="{{ url_for('start_camera_capture') }}">
-        <label for="camera_url">URL da Câmera:</label>
-        <input type="text" name="camera_url" id="camera_url" value="http://192.168.1.7/cam-hi.jpg" placeholder="Insira a URL da câmera">
-        <button type="submit" class="btn btn-primary">Iniciar Captura</button>
-    </form>
-    
-    <a href="{{ url_for('stop_capture') }}" class="btn btn-warning">Parar Captura</a>
-    
-    <!-- Botão para processar imagens usando formulário POST -->
-    <a href="#" onclick="document.getElementById('processImagesForm').submit();" class="btn btn-success">Processar Imagens</a>
-    <form id="processImagesForm" action="{{ url_for('process_and_rank_images') }}" method="POST" style="display:none;"></form>
-
-
-</div>
 
 <!-- Cartões de Funcionalidades -->
 <div class="cards-container">
@@ -43,11 +28,6 @@
         <h3>Verificação ao Vivo</h3>
         <p>Visualize a verificação de imagens em tempo real.</p>
         <a href="{{ url_for('live_verification') }}" class="btn btn-secondary">Acessar</a>
-    </div>
-    <div class="card">
-        <h3>Resultados</h3>
-        <p>Veja os resultados das últimas capturas.</p>
-        <a href="{{ url_for('view_results') }}" class="btn btn-secondary">Acessar</a>
     </div>
     <div class="card">
         <h3>Imagens Processadas</h3>

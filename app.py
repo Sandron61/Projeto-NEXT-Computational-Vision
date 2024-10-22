@@ -17,7 +17,7 @@ pathlib.PosixPath = pathlib.WindowsPath
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with your own secret key
 
-# Global variables
+# Variáveis globais
 model = None
 model_loaded = False
 camera = None
@@ -28,7 +28,23 @@ capture_images = []
 continuous_capturing = False
 groups = {}
 ranking_data = []
+ranking_data_lock = threading.RLock()
 camera_url = 'http://192.168.1.7/cam-hi.jpg'
+
+
+
+def default_serializer(obj):
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return str(obj)
+
+
+
 
 def capture_frame():
     global camera, frame
@@ -45,39 +61,65 @@ def capture_frame():
         print("Error: Camera is not initialized or cannot be accessed.")
         frame = None
 
-
-
-
-
 # Load ranking data from file
 def load_ranking_data():
     global ranking_data
-    if os.path.exists('ranking.json'):
-        with open('ranking.json', 'r') as f:
-            ranking_data = json.load(f)
-    else:
-        ranking_data = []
+    with ranking_data_lock:
+        if os.path.exists('ranking.json'):
+            try:
+                with open('ranking.json', 'r') as f:
+                    ranking_data = json.load(f)
+                print("ranking_data carregado de ranking.json")
+            except json.JSONDecodeError as e:
+                print(f"Erro ao decodificar ranking.json: {e}")
+                ranking_data = []
+                print("Iniciando ranking_data como lista vazia.")
+        else:
+            ranking_data = []
+            print("ranking.json não encontrado. Iniciando ranking_data como lista vazia.")
 
-# Save ranking data to file
+
 def save_ranking_data():
     global ranking_data
-    with open('ranking.json', 'w') as f:
-        json.dump(ranking_data, f)
+    with ranking_data_lock:
+        try:
+            print("Iniciando salvamento do ranking_data...")
+            ranking_json_path = os.path.abspath('ranking.json')
+            print(f"Caminho absoluto para ranking.json: {ranking_json_path}")
+            print(f"Dados a serem salvos em ranking.json: {ranking_data}")
+            with open(ranking_json_path, 'w') as f:
+                json.dump(ranking_data, f, default=default_serializer)
+            print("ranking_data salvo em ranking.json")
+        except Exception as e:
+            print(f"Erro ao salvar ranking_data: {e}")
+            traceback.print_exc()
 
 # Load groups data from file
 def load_groups():
     global groups
     if os.path.exists('groups.json'):
-        with open('groups.json', 'r') as f:
-            groups = json.load(f)
+        try:
+            with open('groups.json', 'r') as f:
+                groups = json.load(f)
+            print(f"Grupos carregados de groups.json: {groups}")
+        except Exception as e:
+            print(f"Erro ao carregar grupos de groups.json: {e}")
+            traceback.print_exc()
+            groups = {}
     else:
         groups = {}
+        print("Arquivo groups.json não encontrado. Iniciando com dicionário de grupos vazio.")
 
 # Save groups data to file
 def save_groups():
     global groups
-    with open('groups.json', 'w') as f:
-        json.dump(groups, f)
+    try:
+        with open('groups.json', 'w') as f:
+            json.dump(groups, f)
+        print("Grupos salvos com sucesso em groups.json")
+    except Exception as e:
+        print(f"Erro ao salvar grupos em groups.json: {e}")
+        traceback.print_exc()
 
 # Index route (login)
 @app.route('/', methods=['GET', 'POST'])
@@ -112,8 +154,6 @@ def continuous_capture():
         capture_frame()
         time.sleep(0.1)  # Pequeno atraso para evitar sobrecarga
 
-
-
 # Live verification
 @app.route('/live_verification')
 def live_verification():
@@ -127,12 +167,19 @@ def start_continuous_capture():
     global continuous_capturing
     continuous_capturing = True
 
+    # Obter o nome do grupo da sessão
+    group_name = session.get('group_name', 'Anônimo')
+
+    # Garantir que o diretório do grupo exista
+    group_capture_dir = os.path.join('static', 'captures', group_name)
+    os.makedirs(group_capture_dir, exist_ok=True)
+
     def capture_images_continuously():
         global frame
         while continuous_capturing:
             if frame is not None:
                 filename = f"capture_{int(time.time() * 1000)}.jpg"
-                filepath = os.path.join('static/captures', filename)
+                filepath = os.path.join(group_capture_dir, filename)
                 cv2.imwrite(filepath, frame)
                 print(f"Imagem contínua capturada e salva: {filename}")
             time.sleep(2)  # Intervalo entre capturas contínuas
@@ -142,6 +189,7 @@ def start_continuous_capture():
     capture_thread.start()
 
     return "Captura contínua iniciada", 200
+
 
 @app.route('/stop_continuous_capture', methods=['POST'])
 def stop_continuous_capture():
@@ -168,24 +216,23 @@ def initialize_camera():
         print(f"Error accessing camera URL: {e}")
         return False
 
-
-
-
-# Start live processing
 # Start live processing
 @app.route('/start_live_processing')
 def start_live_processing():
-    global processing_active
+    global processing_active, capturing
 
     # Iniciar a verificação da câmera
     if not initialize_camera():
         return "Error initializing camera", 500
 
     processing_active = True
-    threading.Thread(target=process_live_video, daemon=True).start()  # Inicia a thread para o processamento de vídeo
+    capturing = True  # Definindo capturing como True
+
+    # Obter o nome do grupo da sessão
+    group_name = session.get('group_name', 'Anônimo')
+
+    threading.Thread(target=process_live_video, args=(group_name,), daemon=True).start()
     return redirect(url_for('live_verification'))
-
-
 
 
 def close_camera():
@@ -194,10 +241,6 @@ def close_camera():
         camera.release()
         camera = None
         print("Camera released successfully.")
-
-
-
-
 
 # Stop live processing
 @app.route('/stop_live_processing')
@@ -236,10 +279,6 @@ def live_feed():
         print("Error encoding frame.")
         return '', 204
 
-
-
-
-
 @app.route('/check_model_status')
 def check_model_status():
     global model_loaded, processing_active
@@ -247,13 +286,6 @@ def check_model_status():
         return '', 200
     else:
         return '', 503
-
-
-
-
-
-
-
 
 def gen_frames():
     global frame
@@ -266,35 +298,6 @@ def gen_frames():
         else:
             time.sleep(0.1)
 
-""" def process_live_video():
-    global processing_active, frame, model
-
-    # Garantir que o modelo seja carregado antes de iniciar o processamento de vídeo
-    if model is None:
-        load_model()
-
-    if model is None:
-        print("Model loading failed. Stopping live processing.")
-        processing_active = False
-        return
-
-    # URL da câmera
-    image_url = 'http://192.168.1.7/cam-hi.jpg'
-
-    while processing_active:
-        try:
-            img_resp = urllib.request.urlopen(image_url)
-            imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
-            img = cv2.imdecode(imgnp, -1)
-            if model is not None:
-                results = model(img)
-                frame = np.squeeze(results.render())
-            else:
-                frame = img
-        except Exception as e:
-            print(f"Error processing live video: {e}")
-            frame = None
-        time.sleep(0.1) """
 @app.route('/capture_live_image', methods=['POST'])
 def capture_live_image():
     """
@@ -302,29 +305,29 @@ def capture_live_image():
     """
     global frame
     if frame is not None:
+        # Obter o nome do grupo da sessão
+        group_name = session.get('group_name', 'Anônimo')
+
+        # Garantir que o diretório do grupo exista
+        group_capture_dir = os.path.join('static', 'captures', group_name)
+        os.makedirs(group_capture_dir, exist_ok=True)
+
         filename = f"capture_{int(time.time() * 1000)}.jpg"
-        filepath = os.path.join('static/captures', filename)
+        filepath = os.path.join(group_capture_dir, filename)
         cv2.imwrite(filepath, frame)
         return "Imagem capturada com sucesso.", 200
     else:
         return "Nenhuma imagem disponível para capturar.", 500
 
-
-def process_live_video(capture_images=True, capture_interval=2):
-    """
-    Função para processar o vídeo ao vivo e capturar imagens opcionalmente.
-    
-    Args:
-        capture_images (bool): Se True, a função também irá capturar e salvar imagens.
-        capture_interval (int): Intervalo de tempo em segundos entre capturas de imagens (se `capture_images` for True).
-    """
-    global processing_active, frame, model, capturing
+def process_live_video(group_name, capture_images=True, capture_interval=2):
+    global processing_active, frame, model, capturing, ranking_data
     last_capture_time = time.time()  # Controle de tempo para capturar as imagens
 
     # Garantir que o modelo esteja carregado
-    if model is None:
-        load_model()
-
+    load_group_model(group_name)
+    processing_active = True
+    capturing = True
+    print(f"capturing definido como: {capturing}")
     if model is None:
         print("Model loading failed. Stopping live processing.")
         processing_active = False
@@ -332,6 +335,10 @@ def process_live_video(capture_images=True, capture_interval=2):
 
     # URL da câmera
     image_url = 'http://192.168.1.7/cam-hi.jpg'
+
+    # Garantir que o diretório do grupo exista
+    group_capture_dir = os.path.join('static', 'captures', group_name)
+    os.makedirs(group_capture_dir, exist_ok=True)
 
     while processing_active:
         try:
@@ -340,28 +347,103 @@ def process_live_video(capture_images=True, capture_interval=2):
                 imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
                 img = cv2.imdecode(imgnp, -1)
 
-                # Processa a imagem com o modelo, se disponível
+                # Processa a imagem com o modelo
                 if model is not None:
                     results = model(img)
                     frame = np.squeeze(results.render())
+
+                    # Extrair informações das detecções
+                    detections = results.xyxy[0]  # Tensor com as detecções
+                    if len(detections) > 0:
+                        # Converter para numpy e ordenar por confiança
+                        detections = detections.cpu().numpy()
+                        detections = sorted(detections, key=lambda x: x[4], reverse=True)
+                        # Pegar a detecção com maior confiança
+                        best_detection = detections[0]
+                        # Extrair informações
+                        confidence_score = float(best_detection[4])
+                        class_id = int(best_detection[5])
+                        class_name = model.names[class_id]
+                        print(f"Detecções encontradas: {len(detections)}")
+                        print(f"Detecção - class_name: {class_name}, confidence_score: {confidence_score}")
+                    else:
+                        # Se não houver detecções
+                        confidence_score = None
+                        class_name = None
                 else:
                     frame = img
+                    confidence_score = None
+                    class_name = None
 
                 # Captura a imagem se o tempo de intervalo foi atingido e a captura estiver ativa
+                print(f"Antes da condição: capture_images={capture_images}, capturing={capturing}")
                 if capture_images and capturing:
+                    print("Entrou no bloco de atualização do ranking_data")
                     current_time = time.time()
                     if current_time - last_capture_time >= capture_interval:
-                        # Salva a imagem capturada
+                        # Nome do arquivo
                         filename = f"capture_{int(current_time * 1000)}.jpg"
-                        filepath = os.path.join('static/captures', filename)
+                        filepath = os.path.join(group_capture_dir, filename)
+                        # Salvar a imagem
                         cv2.imwrite(filepath, frame)
                         print(f"Imagem capturada e salva: {filename}")
-                        last_capture_time = current_time  # Atualiza o tempo da última captura
+
+                        # Protege o acesso ao ranking_data
+                        with ranking_data_lock:
+                            # Carregar os dados atualizados
+                            load_ranking_data()
+                            print(f"ranking_data antes da atualização: {ranking_data}")
+
+                            # Obter a entrada do grupo no ranking_data
+                            group_entry = get_group_entry(group_name)
+                            print(f"group_entry obtido: {group_entry}")
+
+                            # Criar o img_info
+                            img_info = {
+                                'image_filename': filename,  # Apenas o nome do arquivo
+                                'class': class_name,
+                                'confidence': confidence_score
+                            }
+                            # Adicionar à lista de imagens do grupo
+                            group_entry['images'].append(img_info)
+
+                            # Atualizar a acurácia média do grupo
+                            if confidence_score is not None:
+                                confidences = [img['confidence'] for img in group_entry['images'] if img['confidence'] is not None]
+                                group_entry['accuracy'] = sum(confidences) / len(confidences)
+                            else:
+                                # Se não houver confiança, manter a acurácia atual
+                                pass
+                            print(f"Adicionando img_info ao ranking_data: {img_info}")
+                            print(f"ranking_data após a atualização: {ranking_data}")
+                            # Salvar o ranking_data
+                            print("Chamando save_ranking_data()")
+                            save_ranking_data()
+                            print(f"Ranking data atualizado e salvo em ranking.json")
+
+                        last_capture_time = current_time
 
         except Exception as e:
-            print(f"Error processing live video: {e}")
-            frame = None
+            print(f"Erro no processamento do vídeo ao vivo: {e}")
+            traceback.print_exc()
         time.sleep(0.1)
+
+def get_group_entry(group_name):
+    global ranking_data
+    with ranking_data_lock:
+        # Procurar pelo grupo no ranking_data
+        group_entry = next((entry for entry in ranking_data if entry['group'] == group_name), None)
+        if group_entry is None:
+            # Se não existir, criar uma nova entrada
+            group_entry = {
+                'group': group_name,
+                'accuracy': 0.0,
+                'images': []
+            }
+            ranking_data.append(group_entry)
+        return group_entry
+
+
 
 @app.route('/start_live_capture', methods=['POST'])
 def start_live_capture():
@@ -372,7 +454,11 @@ def start_live_capture():
     capturing = True
     processing_active = True
     capture_interval = int(request.form.get('capture_interval', 2))  # Intervalo entre capturas
-    capture_thread = threading.Thread(target=process_live_video, args=(True, capture_interval))
+
+    # Get group name from session
+    group_name = session.get('group_name', 'Anônimo')
+
+    capture_thread = threading.Thread(target=process_live_video, args=(group_name, True, capture_interval))
     capture_thread.start()
     flash('Transmissão ao vivo e captura de imagens iniciadas.', 'success')
     return redirect(url_for('dashboard'))
@@ -388,78 +474,10 @@ def stop_live_capture():
     flash('Captura de imagens interrompida.', 'success')
     return redirect(url_for('dashboard'))
 
-
-
-
-
 import threading
 
 camera_lock = threading.Lock()  # Lock global para gerenciar o acesso à câmera
-"""
-def start_capture(camera_url, interval=2, reset_delay=5):
-   
-    global capturing
-    capturing = True
 
-    def reconnect_camera():
-
-        nonlocal cap
-        with camera_lock:  # Bloqueia o acesso à câmera
-            print("Liberando a câmera...")
-            cap.release()  # Libera a câmera
-            time.sleep(reset_delay)  # Aguarda antes de reconectar
-            print(f"Tentando reconectar a câmera após {reset_delay} segundos de espera...")
-            cap = cv2.VideoCapture(camera_url)  # Tenta reconectar a câmera
-            if cap.isOpened():
-                print("Câmera reconectada com sucesso.")
-            else:
-                print(f"Erro: Não foi possível reconectar à câmera com URL: {camera_url}")
-
-    # Inicializa a câmera pela primeira vez
-    with camera_lock:  # Bloqueia o acesso à câmera
-        cap = cv2.VideoCapture(camera_url)
-        if not cap.isOpened():
-            print(f"Erro: Não foi possível abrir a câmera com a URL fornecida: {camera_url}")
-            capturing = False
-            return
-
-    while capturing:
-        with camera_lock:  # Bloqueia o acesso à câmera durante a captura
-            ret, frame = cap.read()
-
-        if ret:
-            try:
-                # Gera o nome do arquivo e salva a imagem capturada
-                filename = f"capture_{int(time.time() * 1000)}.jpg"
-                filepath = os.path.join('static/captures', filename)
-                cv2.imwrite(filepath, frame)
-                print(f"Imagem capturada e salva: {filename}")
-            except Exception as e:
-                print(f"Erro ao salvar a imagem capturada: {str(e)}")
-                capturing = False
-                break
-        else:
-            # Se não for possível capturar a imagem, reinicia a câmera
-            print("Falha ao capturar o frame. Reinicializando a câmera...")
-            reconnect_camera()
-
-        time.sleep(interval)  # Intervalo entre as capturas
-
-    with camera_lock:  # Bloqueia o acesso à câmera durante a liberação
-        cap.release()
-    print("Captura encerrada.")
-"""
-
-
-
-
-
-
-
-
-
-
-# Stop capture
 # Stop capture
 @app.route('/stop_capture')
 def stop_capture():
@@ -468,21 +486,19 @@ def stop_capture():
     print("Interrompendo captura...")
     # Retornando redirecionamento para o dashboard ou uma página apropriada
     flash('Captura de imagens interrompida.', 'success')
-    return redirect(url_for('dashboard'))  # Corrigido
-
+    return redirect(url_for('dashboard'))
 
 @app.route('/start_capture', methods=['POST'])
 def start_camera_capture():
     # Use um URL de câmera padrão se o URL não for fornecido via formulário
     camera_url = request.form.get('camera_url', 'http://192.168.1.7/cam-hi.jpg')  # URL da câmera enviada via formulário ou padrão
     interval = int(request.form.get('interval', 2))  # Intervalo entre capturas, se fornecido
-    capture_thread = threading.Thread(target=start_capture, args=(camera_url, interval))
+    # Get group name from session
+    group_name = session.get('group_name', 'Anônimo')
+    capture_thread = threading.Thread(target=start_capture, args=(camera_url, interval, group_name))
     capture_thread.start()
     flash('Captura de imagens iniciada.', 'success')
     return redirect(url_for('dashboard'))
-
-
-
 
 @app.route('/stop_capture', methods=['POST'])
 def stop_camera_capture():
@@ -490,23 +506,27 @@ def stop_camera_capture():
     flash('Captura de imagens interrompida.', 'success')
     return redirect(url_for('dashboard'))
 
-
-
-
-
 # Capture images function
-def capture_images_func():
+def capture_images_func(group_name):
     global capturing
     global capture_images
     capture_images = []
     count = 0
 
-    # Load model if not loaded
-    if model is None:
-        load_model()
+    # Carregar o modelo do grupo
+    load_group_model(group_name)
 
-    # Replace with your image URL
-    image_url = 'http://192.168.1.7/cam-hi.jpg'  # Update this URL
+    if model is None:
+        print("Model loading failed. Stopping capture.")
+        capturing = False
+        return
+
+    # URL da câmera
+    image_url = 'http://192.168.1.7/cam-hi.jpg'  # Atualize este URL conforme necessário
+
+    # Garantir que o diretório do grupo exista
+    group_capture_dir = os.path.join('static', 'captures', group_name)
+    os.makedirs(group_capture_dir, exist_ok=True)
 
     while capturing and count < 50:
         try:
@@ -514,90 +534,16 @@ def capture_images_func():
             imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
             img = cv2.imdecode(imgnp, cv2.IMREAD_COLOR)
             results = model(img)
-            # Save image and results
+            # Salvar imagem e resultados
             timestamp = int(time.time() * 1000)
-            img_name = f'static/captures/capture_{timestamp}.jpg'
-            cv2.imwrite(img_name, img)
-            capture_images.append({'image': img_name, 'results': results})
+            img_name = f'capture_{timestamp}.jpg'
+            img_path = os.path.join(group_capture_dir, img_name)
+            cv2.imwrite(img_path, img)
+            capture_images.append({'image': img_path, 'results': results})
             count += 1
         except Exception as e:
             print(f"Error capturing images: {e}")
         time.sleep(0.5)
-
-
-# Process results
-# Process results and rank images for each group
-@app.route('/process_images', methods=['POST'])
-def process_and_rank_images():
-    global capture_images
-    global ranking_data  # Ranking global
-    
-    group_name = session.get('group_name', 'Anônimo')
-    
-    # Carregar o modelo do grupo
-    load_group_model(group_name)
-
-    if model is None:
-        flash(f"Erro: Não foi possível carregar o modelo do grupo {group_name}.", 'error')
-        return redirect(url_for('dashboard'))
-    
-    if capture_images:
-        accuracies = []
-        for item in capture_images:
-            results = item['results']
-            if results is not None and len(results.xyxy[0]) > 0:
-                # Pega as acurácias das detecções
-                confidences = results.xyxy[0][:, 4]
-                max_confidence = float(confidences.max())
-                accuracies.append({'image': item['image'], 'accuracy': max_confidence, 'results': results})
-
-        # Ordena as imagens pela acurácia e seleciona as top 5
-        top5 = sorted(accuracies, key=lambda x: x['accuracy'], reverse=True)[:5]
-        avg_accuracy = sum([x['accuracy'] for x in top5]) / len(top5) if top5 else 0
-
-        # Adiciona as melhores imagens ao ranking
-        ranking_entry = {'group': group_name, 'accuracy': avg_accuracy, 'images': []}
-
-        # Salva as imagens com resultados
-        for idx, item in enumerate(top5):
-            img_path = item['image']
-            img = cv2.imread(img_path)
-            results = item['results']
-            img_with_results = np.squeeze(results.render())
-            result_img_name = f'{group_name}_result_{idx}.jpg'
-            result_img_path = f'static/captures/{result_img_name}'
-            cv2.imwrite(result_img_path, img_with_results)
-            ranking_entry['images'].append(result_img_name)
-
-        # Atualiza o ranking
-        load_ranking_data()
-        ranking_data = [entry for entry in ranking_data if entry['group'] != group_name]  # Remove entradas antigas do grupo
-        ranking_data.append(ranking_entry)
-        save_ranking_data()
-
-        flash(f'Resultados processados. Média de acurácia: {avg_accuracy:.2f}', 'success')
-    else:
-        flash('Nenhuma imagem capturada para processar.', 'error')
-
-    return redirect(url_for('group_ranking'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # View processed images
@@ -607,12 +553,17 @@ def view_processed_images():
         return redirect(url_for('login'))
     group_name = session.get('group_name', 'Anônimo')
     load_ranking_data()
+    print(f"ranking_data carregado: {ranking_data}")
     group_entry = next((entry for entry in ranking_data if entry['group'] == group_name), None)
+    print(f"group_entry encontrado para '{group_name}': {group_entry}")
     if group_entry and 'images' in group_entry:
         images = group_entry['images']
     else:
         images = []
-    return render_template('view_processed_images.html', images=images)
+    return render_template('view_processed_images.html', images=images, group_name=group_name)
+
+
+
 
 # Register group
 @app.route('/register_group', methods=['GET', 'POST'])
@@ -643,17 +594,43 @@ def register_group():
         else:
             print(f"Erro ao salvar o modelo para o grupo {group_name}")
         
+        # Carregar grupos existentes
+        load_groups()
+        
         # Registrar o grupo
-        session['group_name'] = group_name
         groups[group_name] = {'model': model_path}
         save_groups()
+        print(f"Grupo {group_name} adicionado ao dicionário e salvo em groups.json")
+        
+        # Registrar o grupo na sessão
+        session['group_name'] = group_name
+        session['model_name'] = os.path.basename(model_path)
         
         flash(f'Grupo {group_name} registrado com sucesso e modelo carregado.', 'success')
         return redirect(url_for('dashboard'))
     
     return render_template('register_group.html')
 
+# Rota para seleção de grupos
+@app.route('/select_group', methods=['GET', 'POST'])
+def select_group():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
+    load_groups()  # Certifique-se de carregar os grupos disponíveis
+
+    if request.method == 'POST':
+        selected_group = request.form.get('group_name')
+        if selected_group in groups:
+            session['group_name'] = selected_group
+            session['model_name'] = os.path.basename(groups[selected_group]['model'])
+            flash(f'Grupo {selected_group} selecionado com sucesso.', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Grupo selecionado não encontrado.', 'error')
+
+    group_names = list(groups.keys())
+    return render_template('select_group.html', group_names=group_names)
 
 # Group ranking
 @app.route('/group_ranking')
@@ -662,52 +639,45 @@ def group_ranking():
     sorted_ranking = sorted(ranking_data, key=lambda x: x['accuracy'], reverse=True)
     return render_template('group_ranking.html', ranking_data=sorted_ranking)
 
-# Upload model
-@app.route('/upload_model', methods=['GET', 'POST'])
-def upload_model():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    current_model = None
-    if request.method == 'POST':
-        if 'model_file' in request.files:
-            model_file = request.files['model_file']
-            if model_file.filename != '':
-                model_path = os.path.join('models', 'best.pt')
-                model_file.save(model_path)
-                flash('Modelo enviado com sucesso.', 'success')
-                load_model()
-            else:
-                flash('Nenhum arquivo selecionado.', 'error')
-        else:
-            flash('Nenhum arquivo enviado.', 'error')
-    if os.path.exists('models/best.pt'):
-        current_model = 'best.pt'
-    return render_template('upload_model.html', current_model=current_model)
-
-# View results (if needed)
-@app.route('/view_results')
-def view_results():
-    load_ranking_data()
-    sorted_ranking = sorted(ranking_data, key=lambda x: x['accuracy'], reverse=True)
-    return render_template('view_results.html', ranking_data=sorted_ranking)
-
-
 def save_ranking_data():
     global ranking_data
-    with open('ranking.json', 'w') as f:
-        json.dump(ranking_data, f)
+    with ranking_data_lock:
+        try:
+            ranking_json_path = os.path.abspath('ranking.json')
+            print(f"Caminho absoluto para ranking.json: {ranking_json_path}")
+            print(f"Dados a serem salvos em ranking.json: {ranking_data}")
+            with open(ranking_json_path, 'w') as f:
+                json.dump(ranking_data, f, default=default_serializer)
+            print("ranking_data salvo em ranking.json")
+        except Exception as e:
+            print(f"Erro ao salvar ranking_data: {e}")
+            traceback.print_exc()
 
-# Carregar ranking do arquivo
+
+
+
 def load_ranking_data():
     global ranking_data
-    if os.path.exists('ranking.json'):
-        with open('ranking.json', 'r') as f:
-            ranking_data = json.load(f)
-    else:
-        ranking_data = []
+    with ranking_data_lock:
+        if os.path.exists('ranking.json'):
+            try:
+                with open('ranking.json', 'r') as f:
+                    ranking_data = json.load(f)
+                print("ranking_data carregado de ranking.json")
+            except json.JSONDecodeError as e:
+                print(f"Erro ao decodificar ranking.json: {e}")
+                ranking_data = []
+                print("Iniciando ranking_data como lista vazia.")
+        else:
+            ranking_data = []
+            print("ranking.json não encontrado. Iniciando ranking_data como lista vazia.")
+
 
 def load_group_model(group_name):
-    global model, model_loaded
+    global model, model_loaded, groups
+
+    # Carregar grupos existentes
+    load_groups()
     
     # Verificar se o grupo tem um modelo associado
     if group_name in groups and 'model' in groups[group_name]:
@@ -736,34 +706,6 @@ def load_group_model(group_name):
         model = None
         model_loaded = False
 
-
-
-
-
-
-
-# Load model
-def load_model():
-    global model, model_loaded
-    model_path = 'models/best.pt'
-    if os.path.exists(model_path):
-        print("Loading model from", model_path)
-        try:
-            model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True)
-            model.conf = 0.6
-            model_loaded = True  # Modelo carregado com sucesso
-            print("Model loaded successfully.")
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            traceback.print_exc()
-            model = None
-            model_loaded = False
-    else:
-        print("Model file not found at", model_path)
-        model = None
-        model_loaded = False
-
-
 # Inicia a aplicação Flask
 if __name__ == '__main__':
     # Verificar se os diretórios necessários existem
@@ -771,5 +713,8 @@ if __name__ == '__main__':
         os.makedirs('models')
     if not os.path.exists('static/captures'):
         os.makedirs('static/captures')
+
+    # Carregar grupos existentes
     load_groups()
+
     app.run(host='0.0.0.0', port=5000, debug=True)

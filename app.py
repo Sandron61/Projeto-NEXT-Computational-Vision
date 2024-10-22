@@ -18,17 +18,20 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with your own secret key
 
 # Variáveis globais
-model = None
-model_loaded = False
+#model = None
+#model_loaded = False
 camera = None
-frame = None
-capturing = False  # Renamed from capture_active
-processing_active = False
+#frame = None
+#capturing = False  # Renamed from capture_active
+#processing_active = False
 capture_images = []
 continuous_capturing = False
 groups = {}
 ranking_data = []
 ranking_data_lock = threading.RLock()
+group_processors = {}
+group_processors_lock = threading.Lock()
+
 camera_url = 'http://192.168.1.7/cam-hi.jpg'
 
 
@@ -42,6 +45,168 @@ def default_serializer(obj):
         return obj.tolist()
     else:
         return str(obj)
+    
+
+class GroupProcessor:
+    def __init__(self, group_name):
+        self.group_name = group_name
+        self.model = None
+        self.model_loaded = False
+        self.processing_active = False
+        self.capturing = False
+        self.frame = None
+        self.capture_thread = None
+        self.load_model()
+        self.ranking_data_lock = threading.RLock()
+        self.last_capture_time = time.time()
+
+    def load_model(self):
+        # Load the model for the group
+        if self.group_name in groups and 'model' in groups[self.group_name]:
+            model_path = groups[self.group_name]['model']
+            if os.path.exists(model_path):
+                try:
+                    self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True)
+                    self.model.conf = 0.6
+                    self.model_loaded = True
+                    print(f"Model for group {self.group_name} loaded successfully.")
+                except Exception as e:
+                    print(f"Error loading model for group {self.group_name}: {e}")
+                    traceback.print_exc()
+                    self.model = None
+                    self.model_loaded = False
+            else:
+                print(f"Model for group {self.group_name} not found at {model_path}.")
+                self.model = None
+                self.model_loaded = False
+        else:
+            print(f"Group {self.group_name} does not have an associated model.")
+            self.model = None
+            self.model_loaded = False
+
+
+
+    def start_processing(self):
+        try:
+            if not self.processing_active:
+                self.processing_active = True
+                self.capturing = True
+                self.capture_thread = threading.Thread(target=self.process_live_video, daemon=True)
+                self.capture_thread.start()
+        except Exception as e:
+            print(f"Error starting processing for group {self.group_name}: {e}")
+            traceback.print_exc()
+            self.processing_active = False
+            self.capturing = False
+
+
+    def stop_processing(self):
+        self.processing_active = False
+        self.capturing = False
+        if self.capture_thread is not None:
+            self.capture_thread.join()
+            self.capture_thread = None
+
+    def process_live_video(self):
+        # Similar to the previous process_live_video function, but using self variables
+        last_capture_time = time.time()
+        model = self.model
+
+        if not self.model_loaded:
+            print(f"Model for group {self.group_name} is not loaded.")
+            return
+
+        # URL da câmera
+        image_url = 'http://192.168.1.7/cam-hi.jpg'
+
+        # Ensure the group capture directory exists
+        group_capture_dir = os.path.join('static', 'captures', self.group_name)
+        os.makedirs(group_capture_dir, exist_ok=True)
+
+        while self.processing_active:
+            try:
+                img_resp = urllib.request.urlopen(image_url)
+                imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
+                img = cv2.imdecode(imgnp, -1)
+
+                # Process the image with the model
+                results = model(img)
+                self.frame = np.squeeze(results.render())
+
+                # Process detections
+                # (Implement the same logic as before, but use self variables and methods)
+                self.process_detections(results, img, group_capture_dir)
+
+            except Exception as e:
+                print(f"Error in live video processing for group {self.group_name}: {e}")
+                traceback.print_exc()
+            time.sleep(0.1)
+
+    def process_detections(self, results, img, group_capture_dir):
+        current_time = time.time()
+        model = self.model
+
+        # Process detections
+        detections = results.xyxy[0]  # Tensor with detections
+        if len(detections) > 0:
+            # Convert to numpy
+            detections = detections.cpu().numpy()
+            # Map class IDs to names
+            class_names = [model.names[int(cls_id)] for cls_id in detections[:, 5]]
+            # Filter detections for Roof and Person
+            valid_classes = ['Telhado', 'Pessoa']
+            filtered_indices = [i for i, cls_name in enumerate(class_names) if cls_name in valid_classes]
+            if filtered_indices:
+                # Get filtered detections
+                filtered_detections = detections[filtered_indices]
+                # Select detection with highest confidence
+                best_detection_idx = np.argmax(filtered_detections[:, 4])
+                best_detection = filtered_detections[best_detection_idx]
+                confidence_score = float(best_detection[4])
+                class_id = int(best_detection[5])
+                class_name = model.names[class_id]
+            else:
+                confidence_score = None
+                class_name = None
+        else:
+            confidence_score = None
+            class_name = None
+
+        # Handle capturing and saving images
+        if self.capturing:
+            if current_time - self.last_capture_time >= 2:  # capture_interval
+                # Save the image
+                filename = f"capture_{int(current_time * 1000)}.jpg"
+                filepath = os.path.join(group_capture_dir, filename)
+                cv2.imwrite(filepath, self.frame)
+
+                # Update ranking data
+                with self.ranking_data_lock:
+                    # Load ranking data
+                    load_ranking_data()
+                    group_entry = get_group_entry(self.group_name)
+
+                    if confidence_score is not None:
+                        img_info = {
+                            'image_filename': filename,
+                            'class': class_name,
+                            'confidence': confidence_score
+                        }
+                        group_entry['images'].append(img_info)
+                        # Update top_images and accuracy
+                        sorted_images = sorted(group_entry['images'], key=lambda x: x['confidence'], reverse=True)
+                        top_images = sorted_images[:3]
+                        group_entry['top_images'] = top_images
+                        avg_confidence = sum(img['confidence'] for img in top_images) / len(top_images)
+                        group_entry['accuracy'] = avg_confidence
+                    # Save ranking data
+                    save_ranking_data()
+
+                self.last_capture_time = current_time
+
+
+    def get_frame(self):
+        return self.frame
 
 
 
@@ -157,7 +322,15 @@ def continuous_capture():
 # Live verification
 @app.route('/live_verification')
 def live_verification():
+    # Updated to reflect per-group processing status
+    group_name = session.get('group_name', 'Anônimo')
+    with group_processors_lock:
+        processing_active = False
+        if group_name in group_processors:
+            group_processor = group_processors[group_name]
+            processing_active = group_processor.processing_active
     return render_template('live_verification.html', processing_active=processing_active)
+
 
 @app.route('/start_continuous_capture', methods=['POST'])
 def start_continuous_capture():
@@ -219,20 +392,18 @@ def initialize_camera():
 # Start live processing
 @app.route('/start_live_processing')
 def start_live_processing():
-    global processing_active, capturing
-
-    # Iniciar a verificação da câmera
-    if not initialize_camera():
-        return "Error initializing camera", 500
-
-    processing_active = True
-    capturing = True  # Definindo capturing como True
-
-    # Obter o nome do grupo da sessão
     group_name = session.get('group_name', 'Anônimo')
 
-    threading.Thread(target=process_live_video, args=(group_name,), daemon=True).start()
+    # Ensure group processor exists
+    with group_processors_lock:
+        if group_name not in group_processors:
+            group_processors[group_name] = GroupProcessor(group_name)
+
+    group_processor = group_processors[group_name]
+    group_processor.start_processing()
+
     return redirect(url_for('live_verification'))
+
 
 
 def close_camera():
@@ -245,47 +416,45 @@ def close_camera():
 # Stop live processing
 @app.route('/stop_live_processing')
 def stop_live_processing():
-    global camera, processing_active
-    if camera is not None:
-        camera.release()
-        camera = None
-    processing_active = False
+    group_name = session.get('group_name', 'Anônimo')
+
+    with group_processors_lock:
+        if group_name in group_processors:
+            group_processor = group_processors[group_name]
+            group_processor.stop_processing()
+
     return redirect(url_for('live_verification'))
 
 # Video feed
 @app.route('/live_feed')
 def live_feed():
-    global frame, processing_active, model_loaded
+    group_name = session.get('group_name', 'Anônimo')
+    with group_processors_lock:
+        if group_name in group_processors:
+            group_processor = group_processors[group_name]
+            frame = group_processor.get_frame()
+            if frame is not None:
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if ret:
+                    response = make_response(buffer.tobytes())
+                    response.headers['Content-Type'] = 'image/jpeg'
+                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = '0'
+                    return response
+    # Return 204 No Content if no frame is available
+    return '', 204
 
-    print("live_feed route called.")
-
-    # Esperar até que o modelo esteja carregado
-    if not model_loaded:
-        return 'Model not loaded', 503
-
-    if not processing_active or frame is None:
-        # Retorna status 204 se o processamento não está ativo ou não há frame disponível
-        return '', 204
-
-    ret, buffer = cv2.imencode('.jpg', frame)
-    if ret:
-        response = make_response(buffer.tobytes())
-        response.headers['Content-Type'] = 'image/jpeg'
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
-    else:
-        print("Error encoding frame.")
-        return '', 204
 
 @app.route('/check_model_status')
 def check_model_status():
-    global model_loaded, processing_active
-    if model_loaded and processing_active:
-        return '', 200
-    else:
-        return '', 503
+    group_name = session.get('group_name', 'Anônimo')
+    with group_processors_lock:
+        if group_name in group_processors:
+            group_processor = group_processors[group_name]
+            if group_processor.model_loaded and group_processor.processing_active:
+                return '', 200
+    return '', 503
 
 def gen_frames():
     global frame
@@ -436,10 +605,8 @@ def process_live_video(group_name, capture_images=True, capture_interval=1):
 def get_group_entry(group_name):
     global ranking_data
     with ranking_data_lock:
-        # Procurar pelo grupo no ranking_data
         group_entry = next((entry for entry in ranking_data if entry['group'] == group_name), None)
         if group_entry is None:
-            # Se não existir, criar uma nova entrada
             group_entry = {
                 'group': group_name,
                 'accuracy': 0.0,
@@ -453,31 +620,30 @@ def get_group_entry(group_name):
 
 @app.route('/start_live_capture', methods=['POST'])
 def start_live_capture():
-    """
-    Inicia a transmissão ao vivo com captura de imagens.
-    """
-    global capturing, processing_active
-    capturing = True
-    processing_active = True
-    capture_interval = int(request.form.get('capture_interval', 2))  # Intervalo entre capturas
-
-    # Get group name from session
     group_name = session.get('group_name', 'Anônimo')
 
-    capture_thread = threading.Thread(target=process_live_video, args=(group_name, True, capture_interval))
-    capture_thread.start()
+    with group_processors_lock:
+        if group_name not in group_processors:
+            group_processors[group_name] = GroupProcessor(group_name)
+
+    group_processor = group_processors[group_name]
+    group_processor.capturing = True
+    group_processor.start_processing()
     flash('Transmissão ao vivo e captura de imagens iniciadas.', 'success')
     return redirect(url_for('dashboard'))
 
+
 @app.route('/stop_live_capture', methods=['POST'])
 def stop_live_capture():
-    """
-    Para a transmissão ao vivo e a captura de imagens.
-    """
-    global capturing, processing_active
-    capturing = False
-    processing_active = False
-    flash('Captura de imagens interrompida.', 'success')
+    group_name = session.get('group_name', 'Anônimo')
+
+    with group_processors_lock:
+        if group_name in group_processors:
+            group_processor = group_processors[group_name]
+            group_processor.capturing = False
+            flash('Captura de imagens interrompida.', 'success')
+        else:
+            flash('Processador de grupo não encontrado.', 'error')
     return redirect(url_for('dashboard'))
 
 import threading
@@ -567,6 +733,7 @@ def view_processed_images():
         images = []
         top_images = []
     return render_template('view_processed_images.html', images=images, top_images=top_images, group_name=group_name)
+
 
 
 

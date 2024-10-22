@@ -5,24 +5,50 @@
 
 {% block content %}
 <div class="live-verification-container">
-    <div class="controls">
-        {% if processing_active %}
-            <a href="{{ url_for('stop_live_processing') }}" class="btn btn-danger" id="stop-button">Parar Processamento</a>
-        {% else %}
-            <a href="{{ url_for('start_live_processing') }}" class="btn btn-success" id="start-button">Iniciar Processamento ao vivo</a>
-        {% endif %}
-        
-        <!-- Botões de Captura Contínua -->
-        <button class="btn btn-primary" id="start-capture-button" style="margin-left: 10px;">Iniciar Captura Contínua</button>
-        <button class="btn btn-danger" id="stop-capture-button" style="margin-left: 10px; display: none;">Parar Captura Contínua</button>
-    </div>
-    
-    <!-- Adicionando margem para manter o layout consistente -->
-    <div class="video-container" style="margin-top: 20px;">
-        <div id="loading-message" style="display: block; width: 640px; height: 480px; background-color: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-            Esperando...
+    <div class="live-verification-content">
+        <!-- Barra Lateral para Processar Imagens -->
+        <aside class="image-processing-sidebar">
+            <h3>Processar Imagens</h3>
+            <button class="btn btn-primary" id="start-capture-button"><i class="fas fa-play-circle"></i> Iniciar Captura Contínua</button>
+            <button class="btn btn-danger" id="stop-capture-button" style="display: none;"><i class="fas fa-stop-circle"></i> Parar Captura Contínua</button>
+            <hr>
+            <!-- Botão "Capturar Imagem Única" removido -->
+            
+            <!-- Elementos de Áudio (Comente ou adicione os arquivos) -->
+            <!--
+            <audio id="start-capture-sound">
+                <source src="{{ url_for('static', filename='audio/start_capture.mp3') }}" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+            <audio id="stop-capture-sound">
+                <source src="{{ url_for('static', filename='audio/stop_capture.mp3') }}" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+            <audio id="capture-image-sound">
+                <source src="{{ url_for('static', filename='audio/capture_image.mp3') }}" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+            -->
+        </aside>
+
+        <!-- Área Principal de Verificação ao Vivo -->
+        <div class="live-verification-main">
+            <div class="controls">
+                {% if processing_active %}
+                    <a href="{{ url_for('stop_live_processing') }}" class="btn btn-danger" id="stop-button"><i class="fas fa-stop"></i> Parar Processamento</a>
+                {% else %}
+                    <a href="{{ url_for('start_live_processing') }}" class="btn btn-success" id="start-button"><i class="fas fa-play"></i> Iniciar Processamento ao Vivo</a>
+                {% endif %}
+            </div>
+            
+            <!-- Container de Vídeo -->
+            <div class="video-container">
+                <div id="loading-message" class="loading-message">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                </div>
+                <img src="{{ url_for('live_feed') }}" alt="Imagem ao Vivo" id="live-image" style="display: none;">
+            </div>
         </div>
-        <img src="{{ url_for('live_feed') }}" alt="Imagem ao Vivo" id="live-image" style="display: none;">
     </div>
 </div>
 {% endblock %}
@@ -31,7 +57,6 @@
 <script>
     let processingActive = {{ processing_active | tojson }};
     let updateInterval;
-    let captureIntervalId;
 
     function updateFeed() {
         if (processingActive) {
@@ -39,13 +64,11 @@
             const loadingMessage = document.getElementById('loading-message');
 
             liveImage.onload = function() {
-                // Quando a imagem carregar, esconda a mensagem de carregamento
                 loadingMessage.style.display = 'none';
                 liveImage.style.display = 'block';
             };
 
             liveImage.onerror = function() {
-                // Se ocorrer erro ao carregar a imagem, exiba a mensagem de carregamento
                 loadingMessage.style.display = 'flex';
                 liveImage.style.display = 'none';
             };
@@ -83,18 +106,26 @@
             });
     }
 
+    // Função para tocar som
+    function playSound(soundId) {
+        const sound = document.getElementById(soundId);
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(error => console.error(`Erro ao reproduzir som ${soundId}:`, error));
+        }
+    }
+
     // Listener para o botão de iniciar processamento ao vivo
     document.getElementById('start-button')?.addEventListener('click', (e) => {
-        e.preventDefault();  // Impede o redirecionamento imediato para a página de verificação
-        if (!processingActive) {
-            processingActive = true;
-            checkProcessingStatus();
-            window.location.href = e.target.href;  // Redireciona após iniciar o processo
-        }
+        // e.preventDefault(); // Comente ou remova esta linha para permitir a navegação
+        processingActive = true;
+        checkProcessingStatus();
+        startUpdatingFeed();
     });
 
     // Listener para o botão de parar processamento
     document.getElementById('stop-button')?.addEventListener('click', (e) => {
+        // e.preventDefault(); // Comente ou remova esta linha para permitir a navegação
         processingActive = false;
         stopUpdatingFeed();
     });
@@ -106,27 +137,39 @@
 
     // Função para iniciar captura contínua
     document.getElementById('start-capture-button').addEventListener('click', function() {
-        fetch('{{ url_for("start_continuous_capture") }}', { method: 'POST' })
-            .then(response => {
-                if (response.ok) {
-                    // Alterar os botões após iniciar a captura
-                    document.getElementById('start-capture-button').style.display = 'none';
-                    document.getElementById('stop-capture-button').style.display = 'inline-block';
-                    alert("Captura contínua iniciada.");
-                } else {
-                    alert("Falha ao iniciar a captura contínua.");
-                }
-            })
-            .catch(error => {
-                console.error("Erro ao iniciar captura contínua:", error);
-            });
+        fetch('{{ url_for("start_continuous_capture_route") }}', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ duration: 60 })  // Duração em segundos, pode ser ajustada conforme necessário
+        })
+        .then(response => {
+            if (response.ok) {
+                // Tocar som de início de captura
+                playSound('start-capture-sound');
+
+                // Alterar os botões após iniciar a captura
+                document.getElementById('start-capture-button').style.display = 'none';
+                document.getElementById('stop-capture-button').style.display = 'inline-block';
+                alert("Captura contínua iniciada.");
+            } else {
+                alert("Falha ao iniciar a captura contínua.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao iniciar captura contínua:", error);
+        });
     });
 
     // Função para parar captura contínua
     document.getElementById('stop-capture-button').addEventListener('click', function() {
-        fetch('{{ url_for("stop_continuous_capture") }}', { method: 'POST' })
+        fetch('{{ url_for("stop_continuous_capture_route") }}', { method: 'POST' })
             .then(response => {
                 if (response.ok) {
+                    // Tocar som de parada de captura
+                    playSound('stop-capture-sound');
+
                     // Alterar os botões após parar a captura
                     document.getElementById('start-capture-button').style.display = 'inline-block';
                     document.getElementById('stop-capture-button').style.display = 'none';
@@ -139,5 +182,7 @@
                 console.error("Erro ao parar captura contínua:", error);
             });
     });
+
+    // A função para capturar imagem única foi removida
 </script>
 {% endblock %}

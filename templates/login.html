@@ -1,4 +1,3 @@
-<!-- templates/login.html -->
 {% extends "base.html" %}
 
 {% block title %}Login - Reconhecedor de Imagens{% endblock %}
@@ -6,9 +5,9 @@
 {% block content %}
 <div class="login-container">
     <form method="post" class="login-form">
-        <h2>Login</h2>
+        <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
         {% if error %}
-            <div class="error-message">{{ error }}</div>
+            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
         {% endif %}
         <div class="form-group">
             <label for="username">Usuário</label>
@@ -18,7 +17,7 @@
             <label for="password">Senha</label>
             <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
         </div>
-        <button type="submit" class="btn">Entrar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-user-check"></i> Entrar</button>
     </form>
 </div>
 {% endblock %}

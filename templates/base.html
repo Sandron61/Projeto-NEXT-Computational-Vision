@@ -1,4 +1,3 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Ícone da página -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papm4lNpl1WTP5eG7zCjxGkQ11HmBgNlHqL/2KGkNUV3R3igRBBtUMLh4KM+XlzwEsykBr6ZrUX4K2ouY9YvZQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Meta viewport para responsividade -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -19,15 +20,16 @@
         <!-- Menu Lateral -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="30" height="30">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="80" height="30">
                 <h2>Reconhecedor</h2>
             </div>
             <ul class="nav-links">
-                <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a></li>
-                <li><a href="{{ url_for('register_group') }}" class="{% if request.endpoint == 'register_group' %}active{% endif %}">Cadastro de Grupos</a></li>
-                <li><a href="{{ url_for('group_ranking') }}" class="{% if request.endpoint == 'group_ranking' %}active{% endif %}">Ranking de Grupos</a></li>
-                <li><a href="{{ url_for('live_verification') }}" class="{% if request.endpoint == 'live_verification' %}active{% endif %}">Verificação ao Vivo</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('register_group') }}" class="{% if request.endpoint == 'register_group' %}active{% endif %}"><i class="fas fa-users"></i> Cadastro de Grupos</a></li>
+                <li><a href="{{ url_for('group_ranking') }}" class="{% if request.endpoint == 'group_ranking' %}active{% endif %}"><i class="fas fa-chart-line"></i> Ranking de Grupos</a></li>
+                <li><a href="{{ url_for('live_verification') }}" class="{% if request.endpoint == 'live_verification' %}active{% endif %}"><i class="fas fa-video"></i> Verificação ao Vivo</a></li>
+                <li><a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}"><i class="fas fa-cogs"></i> Configurações</a></li>
+                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
         <!-- Conteúdo Principal -->
@@ -39,12 +41,12 @@
                 </div>
                 <div class="header-right">
                     {% if session.get('group_name') %}
-                        <p>Grupo Atual: {{ session['group_name'] }}</p>
-                        <p>Modelo Carregado: {{ session['model_name'] }}</p>
+                        <p><strong>Grupo Atual:</strong> {{ session['group_name'] }}</p>
+                        <p><strong>Modelo Carregado:</strong> {{ session['model_name'] }}</p>
                     {% else %}
                         <p>Nenhum grupo selecionado.</p>
                     {% endif %}
-                    <a href="{{ url_for('select_group') }}" class="btn btn-secondary">Selecionar Grupo</a>
+                    <a href="{{ url_for('select_group') }}" class="btn btn-secondary"><i class="fas fa-layer-group"></i> Selecionar Grupo</a>
                 </div>
             </header>
             <!-- Mensagens Flash -->
@@ -52,7 +54,10 @@
                 {% if messages %}
                     <div class="flash-messages">
                         {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">{{ message }}</div>
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                                <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                            </div>
                         {% endfor %}
                     </div>
                 {% endif %}

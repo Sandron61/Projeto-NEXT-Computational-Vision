@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <form method="POST" class="settings-form">
+        <h2><i class="fas fa-cogs"></i> Configurações da Câmera</h2>
+        <div class="form-group">
+            <label for="camera_url">URL da Câmera:</label>
+            <input type="text" name="camera_url" id="camera_url" class="form-control" value="{{ camera_url }}" placeholder="Digite a URL da câmera" required>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Configurações</button>
+    </form>
+</div>
+{% endblock %}

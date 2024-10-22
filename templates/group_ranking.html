@@ -1,11 +1,15 @@
-<!-- templates/group_ranking.html -->
-
 {% extends "base.html" %}
 
 {% block title %}Ranking de Grupos - Reconhecedor de Imagens{% endblock %}
 {% block page_title %}Ranking de Grupos{% endblock %}
 
 {% block content %}
+<!-- Elementos de Áudio para os Tambores -->
+<audio id="drum-sound">
+    <source src="{{ url_for('static', filename='audio/drum.mp3') }}" type="audio/mpeg">
+    Seu navegador não suporta o elemento de áudio.
+</audio>
+
 <table class="ranking-table">
     <thead>
         <tr>
@@ -17,7 +21,7 @@
     </thead>
     <tbody>
         {% for item in ranking_data %}
-        <tr>
+        <tr class="{% if loop.index <=3 %}top-{{ loop.index }}{% endif %}">
             <td>{{ loop.index }}</td>
             <td>{{ item.group }}</td>
             <td>{{ '%.2f'|format(item.accuracy * 100) }}</td>
@@ -43,4 +47,32 @@
         {% endfor %}
     </tbody>
 </table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.ranking-table tbody tr');
+        const drumSound = document.getElementById('drum-sound');
+
+        rows.forEach((row, index) => {
+            // Delay para cada linha aparecer
+            setTimeout(() => {
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+                row.style.animation = 'fadeInUp 0.5s forwards';
+
+                // Se for um dos top 3, adicionar efeitos especiais e tocar som
+                if (row.classList.contains('top-1') || row.classList.contains('top-2') || row.classList.contains('top-3')) {
+                    // Adicionar classe para efeitos especiais
+                    row.classList.add('highlight');
+
+                    // Tocar som de tambor
+                    drumSound.currentTime = 0;
+                    drumSound.play();
+                }
+            }, index * 500); // 500ms de atraso entre as linhas
+        });
+    });
+</script>
 {% endblock %}

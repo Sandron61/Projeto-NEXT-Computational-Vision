@@ -1,0 +1,46 @@
+<!-- templates/group_ranking.html -->
+
+{% extends "base.html" %}
+
+{% block title %}Pódio de Grupos - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Pódio de Grupos{% endblock %}
+
+{% block content %}
+<table class="ranking-table">
+    <thead>
+        <tr>
+            <th>Posição</th>
+            <th>Grupo</th>
+            <th>Acurácia Média (%)</th>
+            <th>Melhores Imagens</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in ranking_data %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.group }}</td>
+            <td>{{ '%.2f'|format(item.accuracy * 100) }}</td>
+            <td>
+                {% if item.top_images %}
+                <div class="ranking-images">
+                    {% for img_info in item.top_images %}
+                    <div class="ranking-image-item">
+                        <img src="{{ url_for('static', filename='captures/' ~ item.group ~ '/' ~ img_info.image_filename) }}" alt="Imagem" width="100">
+                        {% if img_info.class %}
+                            <p>{{ img_info.class }}: {{ '%.2f'|format(img_info.confidence * 100) }}%</p>
+                        {% else %}
+                            <p>Nenhuma detecção</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                Nenhuma imagem disponível
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

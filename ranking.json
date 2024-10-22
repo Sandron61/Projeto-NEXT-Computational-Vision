@@ -1,1 +1,133 @@
-[{"group": "grupo 1", "accuracy": 0.7594662110010783, "images": [{"image_filename": "capture_1729616094175.jpg", "class": "Telhado", "confidence": 0.7195799946784973}, {"image_filename": "capture_1729616164008.jpg", "class": "Telhado", "confidence": 0.6638090014457703}, {"image_filename": "capture_1729616165443.jpg", "class": "Telhado", "confidence": 0.7346577644348145}, {"image_filename": "capture_1729616167439.jpg", "class": "Telhado", "confidence": 0.6110897064208984}, {"image_filename": "capture_1729616168520.jpg", "class": "Telhado", "confidence": 0.6774818301200867}, {"image_filename": "capture_1729616171851.jpg", "class": "Telhado", "confidence": 0.7575441002845764}, {"image_filename": "capture_1729616172961.jpg", "class": "Telhado", "confidence": 0.7307466268539429}, {"image_filename": "capture_1729616175707.jpg", "class": "Telhado", "confidence": 0.786196768283844}], "top_images": [{"image_filename": "capture_1729616175707.jpg", "class": "Telhado", "confidence": 0.786196768283844}, {"image_filename": "capture_1729616171851.jpg", "class": "Telhado", "confidence": 0.7575441002845764}, {"image_filename": "capture_1729616165443.jpg", "class": "Telhado", "confidence": 0.7346577644348145}]}, {"group": "grupo 2", "accuracy": 0.6894382437070211, "images": [{"image_filename": "capture_1729616510364.jpg", "class": "Telhado", "confidence": 0.6494693160057068}, {"image_filename": "capture_1729616512865.jpg", "class": "Telhado", "confidence": 0.6782249212265015}, {"image_filename": "capture_1729616514124.jpg", "class": "Telhado", "confidence": 0.6084834337234497}, {"image_filename": "capture_1729616516668.jpg", "class": "Telhado", "confidence": 0.740620493888855}], "top_images": [{"image_filename": "capture_1729616516668.jpg", "class": "Telhado", "confidence": 0.740620493888855}, {"image_filename": "capture_1729616512865.jpg", "class": "Telhado", "confidence": 0.6782249212265015}, {"image_filename": "capture_1729616510364.jpg", "class": "Telhado", "confidence": 0.6494693160057068}]}, {"group": "grupo 3", "accuracy": 0.796393076578776, "images": [{"image_filename": "capture_1729617480102.jpg", "class": "Telhado", "confidence": 0.7554975748062134}, {"image_filename": "capture_1729617482468.jpg", "class": "Telhado", "confidence": 0.8174132704734802}, {"image_filename": "capture_1729617484710.jpg", "class": "Telhado", "confidence": 0.8162683844566345}], "top_images": [{"image_filename": "capture_1729617482468.jpg", "class": "Telhado", "confidence": 0.8174132704734802}, {"image_filename": "capture_1729617484710.jpg", "class": "Telhado", "confidence": 0.8162683844566345}, {"image_filename": "capture_1729617480102.jpg", "class": "Telhado", "confidence": 0.7554975748062134}]}, {"group": "grupo 4", "accuracy": 0.8279817700386047, "images": [{"image_filename": "capture_1729617583997.jpg", "class": "Telhado", "confidence": 0.698610782623291}, {"image_filename": "capture_1729617586001.jpg", "class": "Telhado", "confidence": 0.6712895631790161}, {"image_filename": "capture_1729617588191.jpg", "class": "Telhado", "confidence": 0.7873992323875427}, {"image_filename": "capture_1729617590360.jpg", "class": "Telhado", "confidence": 0.8048774600028992}, {"image_filename": "capture_1729617592665.jpg", "class": "Telhado", "confidence": 0.8125148415565491}, {"image_filename": "capture_1729617595135.jpg", "class": "Telhado", "confidence": 0.8623926043510437}, {"image_filename": "capture_1729617597238.jpg", "class": "Telhado", "confidence": 0.8090378642082214}], "top_images": [{"image_filename": "capture_1729617595135.jpg", "class": "Telhado", "confidence": 0.8623926043510437}, {"image_filename": "capture_1729617592665.jpg", "class": "Telhado", "confidence": 0.8125148415565491}, {"image_filename": "capture_1729617597238.jpg", "class": "Telhado", "confidence": 0.8090378642082214}]}]
+[
+    {
+        "group": "grupo 1",
+        "accuracy": 0.45118334889411926,
+        "images": [
+            {
+                "image_filename": "capture_1729633046563.jpg",
+                "class": "Telhado",
+                "confidence": 0.36642488837242126
+            },
+            {
+                "image_filename": "capture_1729633048617.jpg",
+                "class": "Telhado",
+                "confidence": 0.261273592710495
+            },
+            {
+                "image_filename": "capture_1729633649352.jpg",
+                "class": "Telhado",
+                "confidence": 0.25327765941619873
+            },
+            {
+                "image_filename": "capture_1729633662576.jpg",
+                "class": "Telhado",
+                "confidence": 0.25183841586112976
+            },
+            {
+                "image_filename": "capture_1729633695843.jpg",
+                "class": "Telhado",
+                "confidence": 0.259747177362442
+            },
+            {
+                "image_filename": "capture_1729637723430.jpg",
+                "class": "Telhado",
+                "confidence": 0.49727603793144226
+            },
+            {
+                "image_filename": "capture_1729637993371.jpg",
+                "class": "Telhado",
+                "confidence": 0.3758302330970764
+            },
+            {
+                "image_filename": "capture_1729637995673.jpg",
+                "class": "Telhado",
+                "confidence": 0.2827257215976715
+            },
+            {
+                "image_filename": "capture_1729637997869.jpg",
+                "class": "Telhado",
+                "confidence": 0.4804437756538391
+            }
+        ],
+        "top_images": [
+            {
+                "image_filename": "capture_1729637723430.jpg",
+                "class": "Telhado",
+                "confidence": 0.49727603793144226
+            },
+            {
+                "image_filename": "capture_1729637997869.jpg",
+                "class": "Telhado",
+                "confidence": 0.4804437756538391
+            },
+            {
+                "image_filename": "capture_1729637993371.jpg",
+                "class": "Telhado",
+                "confidence": 0.3758302330970764
+            }
+        ]
+    },
+    {
+        "group": "grupo 2",
+        "accuracy": 0.4657002290089925,
+        "images": [
+            {
+                "image_filename": "capture_1729638057328.jpg",
+                "class": "Telhado",
+                "confidence": 0.4319279193878174
+            },
+            {
+                "image_filename": "capture_1729638060207.jpg",
+                "class": "Telhado",
+                "confidence": 0.2580885887145996
+            },
+            {
+                "image_filename": "capture_1729638064731.jpg",
+                "class": "Telhado",
+                "confidence": 0.612082839012146
+            },
+            {
+                "image_filename": "capture_1729638066759.jpg",
+                "class": "Telhado",
+                "confidence": 0.35308992862701416
+            },
+            {
+                "image_filename": "capture_1729638068826.jpg",
+                "class": "Telhado",
+                "confidence": 0.3242224156856537
+            },
+            {
+                "image_filename": "capture_1729638083931.jpg",
+                "class": "Telhado",
+                "confidence": 0.28338679671287537
+            },
+            {
+                "image_filename": "capture_1729638088056.jpg",
+                "class": "Telhado",
+                "confidence": 0.28096213936805725
+            },
+            {
+                "image_filename": "capture_1729638090486.jpg",
+                "class": "Telhado",
+                "confidence": 0.34388262033462524
+            }
+        ],
+        "top_images": [
+            {
+                "image_filename": "capture_1729638064731.jpg",
+                "class": "Telhado",
+                "confidence": 0.612082839012146
+            },
+            {
+                "image_filename": "capture_1729638057328.jpg",
+                "class": "Telhado",
+                "confidence": 0.4319279193878174
+            },
+            {
+                "image_filename": "capture_1729638066759.jpg",
+                "class": "Telhado",
+                "confidence": 0.35308992862701416
+            }
+        ]
+    }
+]

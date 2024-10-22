@@ -319,15 +319,15 @@ def capture_live_image():
     else:
         return "Nenhuma imagem disponível para capturar.", 500
 
-def process_live_video(group_name, capture_images=True, capture_interval=2):
+def process_live_video(group_name, capture_images=True, capture_interval=1):
     global processing_active, frame, model, capturing, ranking_data
-    last_capture_time = time.time()  # Controle de tempo para capturar as imagens
+    last_capture_time = time.time()
 
     # Garantir que o modelo esteja carregado
     load_group_model(group_name)
     processing_active = True
     capturing = True
-    print(f"capturing definido como: {capturing}")
+
     if model is None:
         print("Model loading failed. Stopping live processing.")
         processing_active = False
@@ -342,86 +342,91 @@ def process_live_video(group_name, capture_images=True, capture_interval=2):
 
     while processing_active:
         try:
-            with camera_lock:  # Garante que o acesso à câmera seja exclusivo
-                img_resp = urllib.request.urlopen(image_url)
-                imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
-                img = cv2.imdecode(imgnp, -1)
+            img_resp = urllib.request.urlopen(image_url)
+            imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
+            img = cv2.imdecode(imgnp, -1)
 
-                # Processa a imagem com o modelo
-                if model is not None:
-                    results = model(img)
-                    frame = np.squeeze(results.render())
+            # Processa a imagem com o modelo
+            if model is not None:
+                results = model(img)
+                frame = np.squeeze(results.render())
 
-                    # Extrair informações das detecções
-                    detections = results.xyxy[0]  # Tensor com as detecções
-                    if len(detections) > 0:
-                        # Converter para numpy e ordenar por confiança
-                        detections = detections.cpu().numpy()
-                        detections = sorted(detections, key=lambda x: x[4], reverse=True)
-                        # Pegar a detecção com maior confiança
-                        best_detection = detections[0]
-                        # Extrair informações
+                # Filtrar detecções para Telhado e Pessoa
+                detections = results.xyxy[0]  # Tensor com as detecções
+                if len(detections) > 0:
+                    # Converter para numpy
+                    detections = detections.cpu().numpy()
+                    # Mapear IDs de classe para nomes
+                    class_names = [model.names[int(cls_id)] for cls_id in detections[:, 5]]
+                    # Filtrar detecções para Telhado e Pessoa
+                    valid_classes = ['Telhado', 'Pessoa']
+                    filtered_indices = [i for i, cls_name in enumerate(class_names) if cls_name in valid_classes]
+                    if filtered_indices:
+                        # Obter detecções filtradas
+                        filtered_detections = detections[filtered_indices]
+                        # Selecionar a detecção com maior confiança
+                        best_detection_idx = np.argmax(filtered_detections[:, 4])
+                        best_detection = filtered_detections[best_detection_idx]
                         confidence_score = float(best_detection[4])
                         class_id = int(best_detection[5])
                         class_name = model.names[class_id]
-                        print(f"Detecções encontradas: {len(detections)}")
-                        print(f"Detecção - class_name: {class_name}, confidence_score: {confidence_score}")
                     else:
-                        # Se não houver detecções
+                        # Se não houver detecções de Telhado ou Pessoa
                         confidence_score = None
                         class_name = None
                 else:
-                    frame = img
+                    # Se não houver detecções
                     confidence_score = None
                     class_name = None
+            else:
+                frame = img
+                confidence_score = None
+                class_name = None
 
-                # Captura a imagem se o tempo de intervalo foi atingido e a captura estiver ativa
-                print(f"Antes da condição: capture_images={capture_images}, capturing={capturing}")
-                if capture_images and capturing:
-                    print("Entrou no bloco de atualização do ranking_data")
-                    current_time = time.time()
-                    if current_time - last_capture_time >= capture_interval:
-                        # Nome do arquivo
-                        filename = f"capture_{int(current_time * 1000)}.jpg"
-                        filepath = os.path.join(group_capture_dir, filename)
-                        # Salvar a imagem
-                        cv2.imwrite(filepath, frame)
-                        print(f"Imagem capturada e salva: {filename}")
+            # Captura a imagem se o tempo de intervalo foi atingido e a captura estiver ativa
+            if capture_images and capturing:
+                current_time = time.time()
+                if current_time - last_capture_time >= capture_interval:
+                    # Nome do arquivo
+                    filename = f"capture_{int(current_time * 1000)}.jpg"
+                    filepath = os.path.join(group_capture_dir, filename)
+                    # Salvar a imagem
+                    cv2.imwrite(filepath, frame)
+                    print(f"Imagem capturada e salva: {filename}")
 
-                        # Protege o acesso ao ranking_data
-                        with ranking_data_lock:
-                            # Carregar os dados atualizados
-                            load_ranking_data()
-                            print(f"ranking_data antes da atualização: {ranking_data}")
+                    # Protege o acesso ao ranking_data
+                    with ranking_data_lock:
+                        # Carregar os dados atualizados
+                        load_ranking_data()
+                        # Obter a entrada do grupo no ranking_data
+                        group_entry = get_group_entry(group_name)
 
-                            # Obter a entrada do grupo no ranking_data
-                            group_entry = get_group_entry(group_name)
-                            print(f"group_entry obtido: {group_entry}")
-
+                        if confidence_score is not None:
                             # Criar o img_info
                             img_info = {
-                                'image_filename': filename,  # Apenas o nome do arquivo
+                                'image_filename': filename,
                                 'class': class_name,
                                 'confidence': confidence_score
                             }
                             # Adicionar à lista de imagens do grupo
                             group_entry['images'].append(img_info)
 
-                            # Atualizar a acurácia média do grupo
-                            if confidence_score is not None:
-                                confidences = [img['confidence'] for img in group_entry['images'] if img['confidence'] is not None]
-                                group_entry['accuracy'] = sum(confidences) / len(confidences)
-                            else:
-                                # Se não houver confiança, manter a acurácia atual
-                                pass
-                            print(f"Adicionando img_info ao ranking_data: {img_info}")
-                            print(f"ranking_data após a atualização: {ranking_data}")
-                            # Salvar o ranking_data
-                            print("Chamando save_ranking_data()")
-                            save_ranking_data()
-                            print(f"Ranking data atualizado e salvo em ranking.json")
+                            # Ordenar as detecções por confiança
+                            sorted_images = sorted(group_entry['images'], key=lambda x: x['confidence'], reverse=True)
+                            # Selecionar as 3 melhores
+                            top_images = sorted_images[:3]
+                            # Calcular a média das 3 melhores confidências
+                            avg_confidence = sum(img['confidence'] for img in top_images) / len(top_images)
+                            group_entry['accuracy'] = avg_confidence
+                            # Atualizar as melhores imagens
+                            group_entry['top_images'] = top_images
+                        else:
+                            # Se não houver detecção válida, não atualiza a acurácia
+                            pass
 
-                        last_capture_time = current_time
+                        # Salvar o ranking_data
+                        save_ranking_data()
+                    last_capture_time = current_time
 
         except Exception as e:
             print(f"Erro no processamento do vídeo ao vivo: {e}")
@@ -438,7 +443,8 @@ def get_group_entry(group_name):
             group_entry = {
                 'group': group_name,
                 'accuracy': 0.0,
-                'images': []
+                'images': [],
+                'top_images': []
             }
             ranking_data.append(group_entry)
         return group_entry
@@ -553,15 +559,56 @@ def view_processed_images():
         return redirect(url_for('login'))
     group_name = session.get('group_name', 'Anônimo')
     load_ranking_data()
-    print(f"ranking_data carregado: {ranking_data}")
     group_entry = next((entry for entry in ranking_data if entry['group'] == group_name), None)
-    print(f"group_entry encontrado para '{group_name}': {group_entry}")
     if group_entry and 'images' in group_entry:
         images = group_entry['images']
+        top_images = group_entry.get('top_images', [])
     else:
         images = []
-    return render_template('view_processed_images.html', images=images, group_name=group_name)
+        top_images = []
+    return render_template('view_processed_images.html', images=images, top_images=top_images, group_name=group_name)
 
+
+
+@app.route('/delete_image', methods=['POST'])
+def delete_image():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    group_name = session.get('group_name', 'Anônimo')
+    image_filename = request.form.get('image_filename')
+
+    # Caminho completo da imagem
+    image_path = os.path.join('static', 'captures', group_name, image_filename)
+
+    # Remover o arquivo de imagem
+    if os.path.exists(image_path):
+        os.remove(image_path)
+        print(f"Imagem {image_filename} deletada.")
+
+    # Remover informações da imagem do ranking_data
+    with ranking_data_lock:
+        load_ranking_data()
+        group_entry = next((entry for entry in ranking_data if entry['group'] == group_name), None)
+        if group_entry and 'images' in group_entry:
+            # Remover a imagem da lista
+            group_entry['images'] = [img for img in group_entry['images'] if img['image_filename'] != image_filename]
+            # Recalcular as top_images
+            sorted_images = sorted(
+                [img for img in group_entry['images'] if 'confidence' in img and img['confidence'] is not None],
+                key=lambda x: x['confidence'],
+                reverse=True
+            )
+            top_images = sorted_images[:3]
+            group_entry['top_images'] = top_images
+            # Recalcular a acurácia
+            if top_images:
+                group_entry['accuracy'] = sum(img['confidence'] for img in top_images) / len(top_images)
+            else:
+                group_entry['accuracy'] = 0.0
+            save_ranking_data()
+
+    flash('Imagem deletada com sucesso.', 'success')
+    return redirect(url_for('view_processed_images'))
 
 
 

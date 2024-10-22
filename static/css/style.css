@@ -435,3 +435,63 @@ header {
     font-size: 14px;
     color: #fff;
 }
+/* Estilos para a página de imagens processadas */
+.processed-images-container {
+    margin-top: 20px;
+}
+
+.images-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.image-item {
+    width: calc(25% - 20px);
+    background-color: #272b2e;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    border: 1px solid #616d72;
+}
+
+.image-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+
+.image-item p {
+    margin-bottom: 10px;
+}
+
+.image-item .btn {
+    background-color: #dc3545;
+}
+
+.image-item .btn:hover {
+    background-color: #c82333;
+}
+/* Estilos para as melhores imagens no ranking */
+.ranking-images {
+    display: flex;
+    gap: 10px;
+}
+
+.ranking-image-item {
+    text-align: center;
+}
+
+.ranking-image-item img {
+    width: 100px;
+    height: auto;
+    border-radius: 5px;
+    border: 1px solid #616d72;
+}
+
+.ranking-image-item p {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #fff;
+}

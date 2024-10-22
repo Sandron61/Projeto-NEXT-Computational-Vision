@@ -12,7 +12,7 @@
             <th>Posição</th>
             <th>Grupo</th>
             <th>Acurácia Média (%)</th>
-            <th>Imagens</th>
+            <th>Melhores Imagens</th>
         </tr>
     </thead>
     <tbody>
@@ -22,9 +22,9 @@
             <td>{{ item.group }}</td>
             <td>{{ '%.2f'|format(item.accuracy * 100) }}</td>
             <td>
-                {% if item.images %}
+                {% if item.top_images %}
                 <div class="ranking-images">
-                    {% for img_info in item.images %}
+                    {% for img_info in item.top_images %}
                     <div class="ranking-image-item">
                         <img src="{{ url_for('static', filename='captures/' ~ item.group ~ '/' ~ img_info.image_filename) }}" alt="Imagem" width="100">
                         {% if img_info.class %}

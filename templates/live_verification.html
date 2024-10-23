@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block title %}Verificação ao Vivo - Reconhecedor de Imagens{% endblock %}
 {% block page_title %}Verificação ao Vivo{% endblock %}
@@ -9,8 +9,23 @@
         <!-- Barra Lateral para Processar Imagens -->
         <aside class="image-processing-sidebar">
             <h3>Processar Imagens</h3>
-            <button class="btn btn-primary" id="start-capture-button"><i class="fas fa-play-circle"></i> Iniciar Captura Contínua</button>
-            <button class="btn btn-danger" id="stop-capture-button" style="display: none;"><i class="fas fa-stop-circle"></i> Parar Captura Contínua</button>
+            <button class="btn btn-primary" id="start-capture-button">
+                <i class="fas fa-play-circle"></i> Iniciar Captura Contínua
+            </button>
+            <button class="btn btn-danger" id="stop-capture-button" style="display: none;">
+                <i class="fas fa-stop-circle"></i> Parar Captura Contínua
+            </button>
+            
+            <!-- Adicionando Temporizador e Barra de Progresso -->
+            <div class="timer-container">
+                <label for="capture-duration">Duração da Captura (segundos):</label>
+                <input type="number" id="capture-duration" min="10" max="3600" value="60" />
+            </div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="timer-display" class="timer-display">Tempo restante: 60s</div>
+            
             <hr>
             <!-- Botão "Capturar Imagem Única" removido -->
             
@@ -35,9 +50,13 @@
         <div class="live-verification-main">
             <div class="controls">
                 {% if processing_active %}
-                    <a href="{{ url_for('stop_live_processing') }}" class="btn btn-danger" id="stop-button"><i class="fas fa-stop"></i> Parar Processamento</a>
+                    <a href="{{ url_for('stop_live_processing') }}" class="btn btn-danger" id="stop-button">
+                        <i class="fas fa-stop"></i> Parar Processamento
+                    </a>
                 {% else %}
-                    <a href="{{ url_for('start_live_processing') }}" class="btn btn-success" id="start-button"><i class="fas fa-play"></i> Iniciar Processamento ao Vivo</a>
+                    <a href="{{ url_for('start_live_processing') }}" class="btn btn-success" id="start-button">
+                        <i class="fas fa-play"></i> Iniciar Processamento ao Vivo
+                    </a>
                 {% endif %}
             </div>
             
@@ -57,6 +76,9 @@
 <script>
     let processingActive = {{ processing_active | tojson }};
     let updateInterval;
+    let timerInterval;
+    let totalDuration = 60; // Duração padrão em segundos
+    let remainingTime = totalDuration;
 
     function updateFeed() {
         if (processingActive) {
@@ -130,19 +152,26 @@
         stopUpdatingFeed();
     });
 
-    // Inicia a atualização do feed se o processamento estiver ativo
-    if (processingActive) {
-        startUpdatingFeed();
-    }
-
-    // Função para iniciar captura contínua
+    // Função para iniciar captura contínua com temporizador
     document.getElementById('start-capture-button').addEventListener('click', function() {
+        const durationInput = document.getElementById('capture-duration');
+        let duration = parseInt(durationInput.value);
+        if (isNaN(duration) || duration < 10 || duration > 3600) {
+            alert("Por favor, insira uma duração válida entre 10 e 3600 segundos.");
+            return;
+        }
+
+        totalDuration = duration;
+        remainingTime = totalDuration;
+        updateProgressBar();
+        updateTimerDisplay();
+
         fetch('{{ url_for("start_continuous_capture_route") }}', { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ duration: 60 })  // Duração em segundos, pode ser ajustada conforme necessário
+            body: JSON.stringify({ duration: duration })  // Duração em segundos, pode ser ajustada conforme necessário
         })
         .then(response => {
             if (response.ok) {
@@ -152,6 +181,10 @@
                 // Alterar os botões após iniciar a captura
                 document.getElementById('start-capture-button').style.display = 'none';
                 document.getElementById('stop-capture-button').style.display = 'inline-block';
+
+                // Iniciar o temporizador
+                startTimer();
+
                 alert("Captura contínua iniciada.");
             } else {
                 alert("Falha ao iniciar a captura contínua.");
@@ -173,6 +206,10 @@
                     // Alterar os botões após parar a captura
                     document.getElementById('start-capture-button').style.display = 'inline-block';
                     document.getElementById('stop-capture-button').style.display = 'none';
+
+                    // Parar o temporizador
+                    stopTimer();
+
                     alert("Captura contínua parada.");
                 } else {
                     alert("Falha ao parar a captura contínua.");
@@ -182,6 +219,72 @@
                 console.error("Erro ao parar captura contínua:", error);
             });
     });
+
+    // Funções para Gerenciar o Temporizador e a Barra de Progresso
+    function startTimer() {
+        const timerDisplay = document.getElementById('timer-display');
+        const progressBar = document.getElementById('progress-bar');
+
+        timerInterval = setInterval(() => {
+            if (remainingTime > 0) {
+                remainingTime--;
+                updateTimerDisplay();
+                updateProgressBar();
+            } else {
+                // Tempo esgotado, parar captura
+                stop_continuous_capture();
+                clearInterval(timerInterval);
+                alert("Captura contínua finalizada automaticamente.");
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        remainingTime = 0;
+        updateTimerDisplay();
+        updateProgressBar();
+    }
+
+    function updateTimerDisplay() {
+        const timerDisplay = document.getElementById('timer-display');
+        timerDisplay.textContent = `Tempo restante: ${remainingTime}s`;
+    }
+
+    function updateProgressBar() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = ((totalDuration - remainingTime) / totalDuration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+    }
+
+    function stop_continuous_capture() {
+        fetch('{{ url_for("stop_continuous_capture_route") }}', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    // Tocar som de parada de captura
+                    playSound('stop-capture-sound');
+
+                    // Alterar os botões após parar a captura
+                    document.getElementById('start-capture-button').style.display = 'inline-block';
+                    document.getElementById('stop-capture-button').style.display = 'none';
+
+                    // Parar o temporizador
+                    stopTimer();
+
+                    alert("Captura contínua parada automaticamente após a duração.");
+                } else {
+                    alert("Falha ao parar a captura contínua.");
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao parar captura contínua:", error);
+            });
+    }
+
+    // Inicia a atualização do feed se o processamento estiver ativo
+    if (processingActive) {
+        startUpdatingFeed();
+    }
 
     // A função para capturar imagem única foi removida
 </script>

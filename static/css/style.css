@@ -1028,3 +1028,62 @@ table th {
 .settings-form .btn i {
     margin-right: 8px;
 }
+/* ... [Seu CSS existente] ... */
+
+/* Temporizador */
+.timer-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.timer-container label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.timer-container input {
+    padding: 10px;
+    font-size: 16px;
+    width: 100%;
+    border: 1px solid #616d72;
+    border-radius: 5px;
+    background-color: #3a3f42;
+    color: #fff;
+}
+
+.timer-container input::placeholder {
+    color: #ccc;
+}
+
+.timer-container input:focus {
+    outline: none;
+    border-color: #ed145b;
+    box-shadow: 0 0 5px rgba(237, 20, 91, 0.5);
+}
+
+/* Barra de Progresso */
+.progress-bar-container {
+    width: 100%;
+    background-color: #3a3f42;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 20px;
+    width: 0%;
+    background-color: #ed145b;
+    transition: width 1s linear;
+}
+
+/* Display do Temporizador */
+.timer-display {
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+}

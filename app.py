@@ -244,19 +244,21 @@ class GroupProcessor:
                 load_ranking_data()
                 group_entry = get_group_entry(self.group_name)
 
-                img_info = {'image_filename': filename, 'class': None, 'confidence': None}  # Adapte conforme necessário
+                # Definir 'confidence' como 0.0 em vez de None
+                img_info = {'image_filename': filename, 'class': None, 'confidence': 0.0}
                 group_entry['images'].append(img_info)
 
-                sorted_images = sorted(group_entry['images'], key=lambda x: x.get('confidence', 0), reverse=True)
+                sorted_images = sorted(group_entry['images'], key=lambda x: x.get('confidence', 0.0), reverse=True)
                 top_images = sorted_images[:3]
                 group_entry['top_images'] = top_images
-                group_entry['accuracy'] = sum(img.get('confidence', 0) for img in top_images) / len(top_images) if top_images else 0.0
+                group_entry['accuracy'] = sum(img.get('confidence', 0.0) for img in top_images) / len(top_images) if top_images else 0.0
 
                 save_ranking_data()
 
         except Exception as e:
             logging.error(f"Erro ao capturar imagem para o grupo {self.group_name}: {e}")
             traceback.print_exc()
+
 
     def stop_continuous_capture(self):
         """Para a captura contínua de maneira graciosa."""

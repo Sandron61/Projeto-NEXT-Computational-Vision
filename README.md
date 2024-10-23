@@ -95,5 +95,4 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir uma issue ou pul
 
 
 ## Autor
-
-Este projeto foi desenvolvido por **Sandron Oliveira Silva**, Tecnólogo em Inteligência Artificial.
+**Sandron Oliveira Silva**, Tecnólogo em Inteligência Artificial.

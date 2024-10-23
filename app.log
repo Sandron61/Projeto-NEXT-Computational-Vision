@@ -6028,3 +6028,10 @@
 2024-10-22 21:45:27,050 INFO:127.0.0.1 - - [22/Oct/2024 21:45:27] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
 2024-10-22 21:45:27,060 INFO:127.0.0.1 - - [22/Oct/2024 21:45:27] "[36mGET /static/img/logo.png HTTP/1.1[0m" 304 -
 2024-10-22 21:45:27,063 INFO:127.0.0.1 - - [22/Oct/2024 21:45:27] "[36mGET /static/js/script.js HTTP/1.1[0m" 304 -
+2024-10-22 22:57:02,801 INFO:Grupos carregados de groups.json: {'grupo 1': {'model': 'models/grupo 1/model.pt'}, 'grupo 2': {'model': 'models\\grupo 2\\model.pt'}}
+2024-10-22 22:57:02,806 INFO:ranking_data carregado de ranking.json
+2024-10-22 22:57:03,672 INFO:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.6:5000
+2024-10-22 22:57:03,672 INFO:[33mPress CTRL+C to quit[0m

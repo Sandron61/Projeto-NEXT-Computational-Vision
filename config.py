@@ -6,7 +6,7 @@ import json
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(24))
     LOG_FILE = os.environ.get('LOG_FILE', 'app.log')
-    DEBUG = os.environ.get('DEBUG', 'True').lower() in ['true', '1', 't']
+    DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
     SETTINGS_FILE = 'settings.json'
     
     @classmethod

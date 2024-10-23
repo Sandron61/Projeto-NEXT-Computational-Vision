@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Reconhecedor de Imagens{% endblock %}</title>
+    <title>{% block title %}Computational Vision{% endblock %}</title>
     <!-- Link para o arquivo CSS principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Fonte do Google Fonts -->
@@ -10,10 +11,13 @@
     <!-- Ícone da página -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papm4lNpl1WTP5eG7zCjxGkQ11HmBgNlHqL/2KGkNUV3R3igRBBtUMLh4KM+XlzwEsykBr6ZrUX4K2ouY9YvZQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-papm4lNpl1WTP5eG7zCjxGkQ11HmBgNlHqL/2KGkNUV3R3igRBBtUMLh4KM+XlzwEsykBr6ZrUX4K2ouY9YvZQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Meta viewport para responsividade -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body>
     <!-- Container principal -->
     <div class="main-container">
@@ -21,14 +25,28 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="80" height="30">
-                <h2>Reconhecedor</h2>
+                <h2>Computational Vision</h2>
             </div>
             <ul class="nav-links">
-                <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('register_group') }}" class="{% if request.endpoint == 'register_group' %}active{% endif %}"><i class="fas fa-users"></i> Cadastro de Grupos</a></li>
-                <li><a href="{{ url_for('group_ranking') }}" class="{% if request.endpoint == 'group_ranking' %}active{% endif %}"><i class="fas fa-chart-line"></i> Ranking de Grupos</a></li>
-                <li><a href="{{ url_for('live_verification') }}" class="{% if request.endpoint == 'live_verification' %}active{% endif %}"><i class="fas fa-video"></i> Verificação ao Vivo</a></li>
-                <li><a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}"><i class="fas fa-cogs"></i> Configurações</a></li>
+                <li><a href="{{ url_for('dashboard') }}"
+                        class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i
+                            class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('register_group') }}"
+                        class="{% if request.endpoint == 'register_group' %}active{% endif %}"><i
+                            class="fas fa-users"></i> Cadastro de Grupos</a></li>
+                <li><a href="{{ url_for('live_verification') }}"
+                        class="{% if request.endpoint == 'live_verification' %}active{% endif %}"><i
+                            class="fas fa-video"></i> Verificação ao Vivo</a></li>
+                <li><a href="{{ url_for('view_processed_images') }}"
+                        class="{% if request.endpoint == 'view_processed_images' %}active{% endif %}"><i
+                            class="fas fa-users"></i> Imagens Processadas</a></li>
+                <li><a href="{{ url_for('group_ranking') }}"
+                        class="{% if request.endpoint == 'group_ranking' %}active{% endif %}"><i
+                            class="fas fa-chart-line"></i> Ranking de Grupos</a></li>
+
+                <li><a href="{{ url_for('settings_page') }}"
+                        class="{% if request.endpoint == 'settings_page' %}active{% endif %}"><i
+                            class="fas fa-cogs"></i> Configurações</a></li>
                 <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
@@ -41,26 +59,27 @@
                 </div>
                 <div class="header-right">
                     {% if session.get('group_name') %}
-                        <p><strong>Grupo Atual:</strong> {{ session['group_name'] }}</p>
-                        <p><strong>Modelo Carregado:</strong> {{ session['model_name'] }}</p>
+                    <p><strong>Grupo Atual:</strong> {{ session['group_name'] }}</p>
+                    <p><strong>Modelo Carregado:</strong> {{ session['model_name'] }}</p>
                     {% else %}
-                        <p>Nenhum grupo selecionado.</p>
+                    <p>Nenhum grupo selecionado.</p>
                     {% endif %}
-                    <a href="{{ url_for('select_group') }}" class="btn btn-secondary"><i class="fas fa-layer-group"></i> Selecionar Grupo</a>
+                    <a href="{{ url_for('select_group') }}" class="btn btn-secondary"><i class="fas fa-layer-group"></i>
+                        Selecionar Grupo</a>
                 </div>
             </header>
             <!-- Mensagens Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                {{ message }}
-                                <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                    <span class="close-btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% endwith %}
             <!-- Conteúdo -->
             <div class="page-content">
@@ -75,4 +94,5 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

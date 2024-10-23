@@ -1,6 +1,6 @@
 # requirements.txt
 
-Flask==2.2.5
-torch==2.0.1
-opencv-python==4.7.0.72
-numpy==1.24.3
+Flask
+torch
+opencv-python
+numpy

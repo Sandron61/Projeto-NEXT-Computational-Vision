@@ -1,0 +1,56 @@
+<!-- detailed_group_ranking.html -->
+{% extends "base.html" %}
+
+{% block title %}Ranking Completo de Grupos - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Ranking Completo de Grupos{% endblock %}
+
+{% block content %}
+<div class="detailed-ranking-container">
+    <div class="groups-list">
+        {% for group in ranking_data %}
+        <div class="group-card">
+            <h3 class="group-name">{{ group.group }}</h3>
+            <p class="group-accuracy"><strong>Acurácia Média:</strong> {{ '%.2f'|format(group.accuracy * 100) }}%</p>
+            <div class="top-images-section">
+                <h4>Melhores Imagens</h4>
+                {% if group.top_images %}
+                <div class="top-images-grid">
+                    {% for img_info in group.top_images %}
+                    <div class="top-image-item">
+                        <a href="{{ url_for('static', filename='captures/' ~ group.group ~ '/' ~ img_info.image_filename) }}" data-lightbox="group-{{ group.group }}" data-title="{{ img_info.class if img_info.class else 'Sem Detecção' }}">
+                            <img src="{{ url_for('static', filename='captures/' ~ group.group ~ '/' ~ img_info.image_filename) }}" alt="Imagem {{ loop.index }} do {{ group.group }}" class="top-image" loading="lazy">
+                        </a>
+                        <p class="image-confidence">
+                            {% if img_info.class %}
+                                {{ img_info.class }}: {{ '%.2f'|format(img_info.confidence * 100) }}%
+                            {% else %}
+                                Sem Detecção
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>Nenhuma imagem disponível.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Biblioteca Lightbox -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Lightbox (opcional: personalizar configurações)
+        lightbox.option({
+            'resizeDuration': 200,
+            'wrapAround': true
+        });
+    });
+</script>
+{% endblock %}

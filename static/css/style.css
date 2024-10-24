@@ -12,6 +12,15 @@ body {
     color: #fff;
 }
 
+:root {
+    --cor-vermelha: #ed145b;
+    --cor-preta: #272b2e;
+    --cor-cinza: #616d72;
+    --cor-fundo: rgba(0,0,0,0.3) /* Fundo claro para contraste */
+    --cor-texto: #333333; /* Cor principal do texto */
+    --cor-borda: #dddddd; /* Cor das bordas */
+}
+
 /* Link padrão */
 a {
     text-decoration: none;
@@ -1086,4 +1095,387 @@ table th {
     font-weight: bold;
     text-align: center;
     color: #fff;
+}
+body {
+    /* Gradiente Linear Animado */
+    background: linear-gradient(135deg, #272b2e, #616d72, #ed145b);
+    background-size: 600% 600%;
+    animation: GradientAnimation 15s ease infinite;
+
+    /* Textura Sobre o Gradiente */
+    position: relative;
+     overflow: visible;  /* Comentado ou removido */
+}
+
+
+
+/* Textura Sobre o Gradiente */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('{{ url_for("static", filename="img/black-linen.png") }}'); /* URL de uma textura sutil */
+    opacity: 0.1; /* Ajuste a opacidade conforme necessário */
+    pointer-events: none; /* Permite clicar nos elementos abaixo */
+    z-index: 1;
+}
+
+/* Animação do Gradiente */
+@keyframes GradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Pódio de Grupos */
+.podium-container {
+    position: relative;
+    text-align: center;
+    padding: 50px 20px;
+    min-height: 100vh; /* Garante que o contêiner ocupe pelo menos a altura total da viewport */
+    z-index: 2; /* Garante que o conteúdo esteja acima da textura */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza verticalmente */
+    align-items: center; /* Centraliza horizontalmente */
+}
+
+/* Conteúdo do Pódio */
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 30px;
+    flex-wrap: wrap; /* Permite que os itens quebrem para uma nova linha em telas menores */
+}
+
+/* Itens do Pódio como Cards */
+.podium-item {
+    width: 250px;
+    background: rgba(39, 43, 46, 0.8); /* Fundo semi-transparente */
+    border-radius: 15px; /* Bordas arredondadas */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra para profundidade */
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease, transform 1s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.podium-item.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Ordenação dos Itens do Pódio */
+.podium-1 {
+    order: 1; /* 1º lugar na posição central */
+    height: auto;
+}
+
+.podium-2 {
+    order: 2; /* 2º lugar à esquerda */
+    height: auto;
+}
+
+.podium-3 {
+    order: 3; /* 3º lugar à direita */
+    height: auto;
+}
+
+/* Títulos e Textos */
+.podium-item h2 {
+    margin-top: 10px;
+    font-size: 22px;
+    color: #fff;
+}
+
+.podium-item p {
+    margin-top: 5px;
+    font-size: 16px;
+    color: #ccc;
+}
+
+/* Imagens das Medalhas */
+.medal {
+    width: 60px; /* Aumentar o tamanho das medalhas */
+    height: auto; /* Mantém a proporção da imagem */
+    margin-bottom: 10px; /* Espaço abaixo da medalha */
+}
+
+/* Imagens das Melhores Imagens */
+.top-images {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap; /* Permite que as imagens quebrem para uma nova linha em telas menores */
+}
+
+.top-image {
+    width: 80px; /* Aumentar o tamanho das melhores imagens */
+    height: 60px;
+    object-fit: cover;
+    border: 3px solid #ed145b;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.top-image:hover {
+    transform: scale(1.2);
+}
+
+/* Ajuste para o Lightbox */
+.lightbox-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.lightbox-caption {
+    color: #fff;
+    font-size: 16px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .podium {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .podium-item {
+        width: 80%;
+    }
+
+    .medal {
+        width: 50px;
+    }
+
+    .top-image {
+        width: 60px;
+        height: 45px;
+    }
+}
+/* Container da Página Detailed Group Ranking */
+/* detailed_group_ranking.html */
+
+/* Detailed Group Ranking Styles */
+
+/* Detailed Group Ranking Styles */
+/* Detailed Group Ranking Styles */
+
+/* Container Principal */
+.detailed-ranking-container {
+    padding: 20px;
+    background-color: var(--cor-fundo);
+}
+
+/* Lista de Grupos */
+.groups-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Card de Grupo */
+.group-card {
+    background-color: var(--cor-preta); /* Fundo Preto */
+    border: 2px solid var(--cor-vermelha); /* Borda Vermelha */
+    border-radius: 8px;
+    padding: 15px;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra mais escura */
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    color: var(--cor-texto-claro); /* Texto Claro para contraste */
+}
+
+/* Efeito de Hover para o Card */
+.group-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--cor-vermelha);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Sombra mais intensa no hover */
+}
+
+/* Nome do Grupo */
+.group-name {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: var(--cor-vermelha); /* Nome em Vermelho */
+}
+
+/* Acurácia Média */
+.group-accuracy {
+    font-size: 1em;
+    margin-bottom: 15px;
+    color: var(--cor-cinza); /* Acurácia em Cinza */
+}
+
+/* Seção de Melhores Imagens */
+.top-images-section {
+    margin-top: 10px;
+}
+
+/* Título das Melhores Imagens */
+.top-images-section h4 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    color: var(--cor-vermelha); /* Título em Vermelho */
+}
+
+/* Grid de Melhores Imagens */
+.top-images-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Item de Imagem */
+.top-image-item {
+    width: 90px;
+    text-align: center;
+    border: 1px solid var(--cor-cinza); /* Borda Cinza */
+    border-radius: 4px;
+    padding: 5px;
+    background-color: #333333; /* Fundo mais escuro para as imagens */
+    transition: transform 0.3s, border-color 0.3s, background-color 0.3s;
+}
+
+/* Efeito de Hover para a Imagem */
+.top-image-item:hover {
+    transform: scale(1.05);
+    border-color: var(--cor-vermelha); /* Borda Vermelha no hover */
+    background-color: #444444; /* Fundo ligeiramente mais claro no hover */
+}
+
+/* Imagem */
+.top-image {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Confiança da Imagem */
+.image-confidence {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: var(--cor-cinza); /* Confiança em Cinza */
+}
+
+
+
+
+
+/* Estilização da Scrollbar para WebKit (Chrome, Safari) */
+.detailed-ranking-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.detailed-ranking-container::-webkit-scrollbar-track {
+    background: #272b2e; /* Cor de fundo da track */
+    border-radius: 6px;
+}
+
+.detailed-ranking-container::-webkit-scrollbar-thumb {
+    background-color: #ed145b; /* Cor do thumb */
+    border-radius: 6px;
+    border: 3px solid #616d72; /* Espaçamento ao redor do thumb */
+}
+
+/* Estilização da Scrollbar para Firefox */
+.detailed-ranking-container {
+    scrollbar-width: thin;
+    scrollbar-color: #ed145b #272b2e;
+}
+/* Estilização do Canvas de Confete */
+#confettiCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Permite interações com elementos abaixo */
+    z-index: 9999; /* Garante que o confete fique acima de outros elementos */
+}
+
+/* Container Principal */
+.about-container {
+    background-color: var(--cor-preta);
+    color: var(--cor-texto-claro);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Título */
+.about-container h2 {
+    text-align: center;
+    color: var(--cor-vermelha);
+    margin-bottom: 30px;
+    font-size: 2em;
+}
+
+/* Lista de Créditos */
+.credits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+/* Item de Crédito */
+.credit-item {
+    display: flex;
+    align-items: center;
+    background-color: #333333;
+    padding: 15px 25px;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 600px;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.credit-item:hover {
+    background-color: var(--cor-cinza);
+    transform: translateY(-3px);
+}
+
+/* Ícone de Crédito */
+.credit-item i {
+    margin-right: 20px;
+    font-size: 1.5em;
+    color: var(--cor-vermelha);
+    transition: color 0.3s;
+}
+
+.credit-item:hover i {
+    color: var(--cor-vermelha);
+}
+
+/* Texto de Crédito */
+.credit-item p {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .credit-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .credit-item i {
+        margin-bottom: 10px;
+    }
 }

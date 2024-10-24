@@ -40,13 +40,18 @@
                 <li><a href="{{ url_for('view_processed_images') }}"
                         class="{% if request.endpoint == 'view_processed_images' %}active{% endif %}"><i
                             class="fas fa-users"></i> Imagens Processadas</a></li>
-                <li><a href="{{ url_for('group_ranking') }}"
-                        class="{% if request.endpoint == 'group_ranking' %}active{% endif %}"><i
-                            class="fas fa-chart-line"></i> Ranking de Grupos</a></li>
-
+                <li><a href="{{ url_for('podium_ranking') }}"
+                        class="{% if request.endpoint == 'podium_ranking' %}active{% endif %}"><i
+                            class="fas fa-medal"></i> Pódio de Grupos</a></li>
+                <li><a href="{{ url_for('detailed_group_ranking') }}"
+                        class="{% if request.endpoint == 'detailed_group_ranking' %}active{% endif %}"><i
+                            class="fas fa-list"></i> Ranking Completo</a></li>
                 <li><a href="{{ url_for('settings_page') }}"
                         class="{% if request.endpoint == 'settings_page' %}active{% endif %}"><i
                             class="fas fa-cogs"></i> Configurações</a></li>
+                <li><a href="{{ url_for('about') }}"
+                        class="{% if request.endpoint == 'about' %}active{% endif %}"><i
+                            class="fas fa-cogs"></i> Sobre</a></li>            
                 <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
@@ -95,4 +100,4 @@
     {% block scripts %}{% endblock %}
 </body>
 
-</html>
+</html> 

@@ -1,0 +1,165 @@
+<!-- podium_ranking.html -->
+{% extends "base.html" %}
+
+{% block title %}Pódio de Grupos - Reconhecedor de Imagens{% endblock %}
+{% block page_title %}Pódio de Grupos{% endblock %}
+
+{% block content %}
+<div class="podium-container">
+    <canvas id="confettiCanvas"></canvas>
+    <div class="podium">
+        {# Reverter a lista para exibir do 3º para o 1º lugar #}
+        {% for group in top_three|reverse %}
+            <div class="podium-item podium-{{ loop.revindex }}">
+                {# Exibir a medalha correta com base na posição #}
+                {% if loop.revindex == 3 %}
+                    <img src="{{ url_for('static', filename='img/bronze.png') }}" alt="Medalha de Bronze" class="medal">
+                {% elif loop.revindex == 2 %}
+                    <img src="{{ url_for('static', filename='img/silver.png') }}" alt="Medalha de Prata" class="medal">
+                {% elif loop.revindex == 1 %}
+                    <img src="{{ url_for('static', filename='img/gold.png') }}" alt="Medalha de Ouro" class="medal">
+                {% endif %}
+                <h2>{{ group.group }}</h2>
+                <p>Acurácia: {{ '%.2f'|format(group.accuracy * 100) }}%</p>
+                {# Exibir as 3 melhores imagens #}
+                {% if group.top_images %}
+                    <div class="top-images">
+                        {% for img in group.top_images %}
+                            <a href="{{ url_for('static', filename='captures/' ~ group.group ~ '/' ~ img.image_filename) }}" data-lightbox="podium-{{ group.group }}" data-title="{{ img.class if img.class else 'Sem Detecção' }}">
+                                <img src="{{ url_for('static', filename='captures/' ~ group.group ~ '/' ~ img.image_filename) }}" alt="Imagem {{ loop.index }}" class="top-image">
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Nenhuma imagem disponível.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Elementos de Áudio -->
+<audio id="celebration-music" autoplay>
+    <source src="{{ url_for('static', filename='sounds/celebration.mp3') }}" type="audio/mpeg">
+    Seu navegador não suporta o elemento de áudio.
+</audio>
+{% endblock %}
+
+{% block scripts %}
+<!-- Biblioteca de Confete -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<!-- Biblioteca Lightbox -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Função para lançar confete com coordenadas x aleatórias
+        function launchConfetti(particleCount, spread, colors = ['#ed145b', '#272b2e', '#616d72']) {
+            // Gerar uma coordenada x aleatória entre 0 e 1
+            const xOrigin = Math.random(); // 0.0 (esquerda) a 1.0 (direita)
+            // Opcional: Fixar a coordenada y, por exemplo, 0.6 para lançar a partir do centro vertical
+            const yOrigin = 0.6;
+            
+            confetti({
+                particleCount: particleCount,
+                spread: spread,
+                origin: { x: xOrigin, y: yOrigin },
+                colors: colors,
+                shapes: ['circle', 'square', 'star'],
+                gravity: 0.6,
+                scalar: 1.2
+            });
+        }
+
+        // Disparo inicial de confete com mais partículas
+        launchConfetti(300, 80);
+
+        // Repetir confete a cada 3 segundos com mais partículas
+        setInterval(() => {
+            launchConfetti(150, 70);
+        }, 3000);
+
+        // Adicionar outro setInterval para confetes adicionais a cada 5 segundos
+        setInterval(() => {
+            launchConfetti(100, 60, ['#ed145b', '#272b2e', '#616d72', '#ffdd57']);
+        }, 5000);
+
+        // Selecionar todos os itens do pódio
+        const podiumItems = document.querySelectorAll('.podium-item');
+        console.log(`Total de podiumItems: ${podiumItems.length}`);
+
+        // Função para adicionar a classe 'active' com os tempos especificados
+        function activatePodiumItems() {
+            podiumItems.forEach((item, index) => {
+                let delay;
+                if (index === 0) {
+                    // Terceiro colocado: 3.8 segundos
+                    delay = 3800;
+                } else if (index === 1) {
+                    // Segundo colocado: 7.8 segundos
+                    delay = 7800;
+                } else if (index === 2) {
+                    // Primeiro colocado: 14 segundos
+                    delay = 14000;
+                }
+
+                console.log(`Agendando 'active' para podium-item ${index + 1} após ${delay}ms`);
+                setTimeout(() => {
+                    item.classList.add('active');
+                    console.log(`Classe 'active' adicionada para podium-item ${index + 1}`);
+
+                    // Lançar confete quando o item do pódio se torna ativo
+                    launchConfetti(200, 60, ['#ed145b', '#272b2e', '#616d72']);
+                }, delay);
+            });
+        }
+
+        // Iniciar a ativação dos itens do pódio
+        activatePodiumItems();
+
+        // Iniciar a música de celebração
+        const celebrationMusic = document.getElementById('celebration-music');
+
+        // Função para tentar iniciar a reprodução do áudio
+        function playCelebrationMusic() {
+            celebrationMusic.play().then(() => {
+                console.log('Música de celebração iniciada.');
+            }).catch((error) => {
+                console.warn('Autoplay de áudio bloqueado. O usuário precisa interagir com a página para iniciar a música.');
+                showStartMusicButton();
+            });
+        }
+
+        // Função para mostrar o botão de iniciar música
+        function showStartMusicButton() {
+            const musicContainer = document.getElementById('start-music-container');
+            if (musicContainer) {
+                musicContainer.style.display = 'block';
+            }
+        }
+
+        // Tentar reproduzir a música imediatamente após a página carregar
+        playCelebrationMusic();
+
+        // Caso a reprodução seja bloqueada, adicionar um evento de clique para iniciar o áudio
+        document.addEventListener('click', function onFirstClick() {
+            playCelebrationMusic();
+            // Remover o listener após a primeira interação
+            document.removeEventListener('click', onFirstClick);
+        });
+
+        // Adicionar listener para o botão de iniciar música (se exibido)
+        const startMusicBtn = document.getElementById('start-music-btn');
+        if (startMusicBtn) {
+            startMusicBtn.addEventListener('click', function() {
+                playCelebrationMusic();
+                // Ocultar o botão após clicar
+                const musicContainer = document.getElementById('start-music-container');
+                if (musicContainer) {
+                    musicContainer.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

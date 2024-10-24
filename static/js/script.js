@@ -24,3 +24,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+// Iniciar o áudio de celebração quando a página de pódio for carregada
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('celebration-music')) {
+        const celebrationMusic = document.getElementById('celebration-music');
+        celebrationMusic.volume = 0.5; // Ajuste o volume conforme necessário
+    }
+});

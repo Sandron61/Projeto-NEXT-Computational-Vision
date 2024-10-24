@@ -362,7 +362,7 @@ def login():
             logging.warning(f"Tentativa de login falhada para usuário: {username}")
     return render_template('login.html', error=error)
 
-@app.route('/logout')
+@app.route('/logout')   
 def logout():
     session.clear()
     flash('Você foi desconectado com sucesso.', 'success')
@@ -678,14 +678,31 @@ def delete_image():
     return redirect(url_for('view_processed_images'))
 
 # Rota para Exibir Ranking de Grupos
-@app.route('/group_ranking')
-def group_ranking():
+@app.route('/podium_ranking')
+def podium_ranking():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
+    
     load_ranking_data()
     sorted_ranking = sorted(ranking_data, key=lambda x: x['accuracy'], reverse=True)
-    return render_template('group_ranking.html', ranking_data=sorted_ranking)
+    top_three = sorted_ranking[:3]
+    return render_template('podium_ranking.html', top_three=top_three)
+
+
+
+@app.route('/detailed_group_ranking')
+def detailed_group_ranking():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    load_ranking_data()
+    # Ordenar os grupos por acurácia de forma decrescente
+    sorted_ranking = sorted(ranking_data, key=lambda x: x['accuracy'], reverse=True)
+    ranking_data_sorted = sorted_ranking
+    
+    return render_template('detailed_group_ranking.html', ranking_data=ranking_data_sorted)
+
+
 
 # Rota Alternativa para Ranking de Grupos
 @app.route('/view_results')
@@ -726,6 +743,15 @@ def settings_page():
         return redirect(url_for('settings_page'))
     
     return render_template('settings.html', camera_url=current_settings.get('camera_url', ''))
+
+
+@app.route('/about')
+def about():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('about.html')
+
+
 
 # Inicialização do Aplicativo
 if __name__ == '__main__':

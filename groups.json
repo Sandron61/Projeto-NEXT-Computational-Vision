@@ -1,23 +1,11 @@
 {
+    "teste nick\u00e3o": {
+        "model": "models\\teste nick\u00e3o\\model.pt"
+    },
     "grupo 1": {
         "model": "models\\grupo 1\\model.pt"
     },
     "grupo 2": {
         "model": "models\\grupo 2\\model.pt"
-    },
-    "grupo 3": {
-        "model": "models\\grupo 3\\model.pt"
-    },
-    "grupo 4": {
-        "model": "models\\grupo 4\\model.pt"
-    },
-    "grupo 5": {
-        "model": "models\\grupo 5\\model.pt"
-    },
-    "grupo 6": {
-        "model": "models\\grupo 6\\model.pt"
-    },
-    "grupo 7": {
-        "model": "models\\grupo 7\\model.pt"
     }
 }

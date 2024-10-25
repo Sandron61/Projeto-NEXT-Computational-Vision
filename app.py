@@ -156,37 +156,46 @@ class GroupProcessor:
 
         if len(detections) > 0:
             detections = detections.cpu().numpy()
-            class_names = [self.model.names[int(cls_id)] for cls_id in detections[:, 5]]
-            valid_classes = ['Telhado', 'Pessoa']
-            filtered_indices = [i for i, cls_name in enumerate(class_names) if cls_name in valid_classes]
+            class_names = [self.model.names[int(cls_id)] for cls_id in detections[:, 5]]  # Pega o nome de todas as classes detectadas
+
+            # Não filtra mais classes, considera todas as detecções
+            filtered_indices = range(len(class_names))  # Considera todos os índices, sem filtro
 
             if filtered_indices:
-                best_detection = detections[filtered_indices[np.argmax(detections[filtered_indices, 4])]]
+                # Achar a detecção com maior confiança
+                best_detection = detections[np.argmax(detections[:, 4])]  # A maior confiança entre todas as detecções
                 confidence_score = float(best_detection[4])
                 class_name = self.model.names[int(best_detection[5])]
 
-                if self.capturing and (current_time - self.last_capture_time >= 2):  # Intervalo de captura
+                # Se estamos no intervalo certo para capturar (a cada 2 segundos)
+                if self.capturing and (current_time - self.last_capture_time >= 2):  
                     filename = f"capture_{int(current_time * 1000)}.jpg"
                     filepath = os.path.join(self.group_capture_dir, filename)
+                    
+                    # Salvar a imagem no diretório
                     cv2.imwrite(filepath, self.frame)
 
-                    # Atualizar ranking data
+                    # Atualizar ranking data com a melhor detecção
                     with ranking_data_lock:
                         load_ranking_data()
                         group_entry = get_group_entry(self.group_name)
 
+                        # Atualizar a entrada com a detecção de maior confiança
                         img_info = {'image_filename': filename, 'class': class_name, 'confidence': confidence_score}
                         group_entry['images'].append(img_info)
 
+                        # Reordenar imagens pela confiança e selecionar as 3 melhores
                         sorted_images = sorted(group_entry['images'], key=lambda x: x['confidence'], reverse=True)
                         top_images = sorted_images[:3]
                         group_entry['top_images'] = top_images
-                        group_entry['accuracy'] = sum(img['confidence'] for img in top_images) / len(top_images)
+                        group_entry['accuracy'] = sum(img['confidence'] for img in top_images) / len(top_images) if top_images else 0.0
 
                         save_ranking_data()
 
                     self.last_capture_time = current_time
                     logging.info(f"Imagem capturada e salva: {filename} para o grupo {self.group_name}.")
+
+
 
     def get_frame(self):
         return self.frame
@@ -305,6 +314,7 @@ def save_ranking_data():
         except Exception as e:
             logging.error(f"Erro ao salvar ranking_data: {e}")
             traceback.print_exc()
+
 
 def load_groups():
     global groups

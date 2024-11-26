@@ -13,6 +13,7 @@ Este projeto foca na detecção de objetos em imagens, utilizando modelos de rec
 - Sistema simples de autenticação.
 - Visualização e gerenciamento de imagens processadas.
 - Registro dos processos e logs de execução.
+- Ranking de grupos da competição.
 
 ## Front-end
 

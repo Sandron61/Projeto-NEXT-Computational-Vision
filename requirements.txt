@@ -4,3 +4,6 @@ Flask
 torch
 opencv-python
 numpy
+pandas
+requests
+pillow

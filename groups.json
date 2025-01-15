@@ -1,11 +1,12 @@
 {
-    "teste nick\u00e3o": {
-        "model": "models\\teste nick\u00e3o\\model.pt"
-    },
+
     "grupo 1": {
         "model": "models\\grupo 1\\model.pt"
     },
     "grupo 2": {
         "model": "models\\grupo 2\\model.pt"
+    },
+    "grupo 3": {
+        "model": "models\\grupo 3\\model.pt"
     }
 }

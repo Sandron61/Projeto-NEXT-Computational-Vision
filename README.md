@@ -64,6 +64,11 @@ Uma imagem no formato PNG, com dimensões de 614x511 pixels e modo de cores RGBA
     ```bash
     pip install -r requirements.txt
     ```
+    
+5. Instale o YoloV5
+    ```bash
+    git clone https://github.com/ultralytics/yolov5
+    ```
 
 ## Como Usar
 
